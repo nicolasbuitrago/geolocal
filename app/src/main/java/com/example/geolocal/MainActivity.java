@@ -1,12 +1,26 @@
 package com.example.geolocal;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 
+import com.example.geolocal.broadcast.BroadcastManager;
+import com.example.geolocal.broadcast.IBroadcastManagerCaller;
+import com.example.geolocal.gps.GPSManager;
+import com.example.geolocal.gps.IGPSManagerCaller;
+import com.example.geolocal.network.SocketManagementService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import android.preference.PreferenceManager;
 import android.view.View;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
 import androidx.core.view.GravityCompat;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 
@@ -20,9 +34,33 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import org.osmdroid.api.IMapController;
+import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, IGPSManagerCaller, IBroadcastManagerCaller {
+
+    GPSManager gpsManager;
+    private MapView map;
+    private MyLocationNewOverlay mLocationOverlay;
+    BroadcastManager broadcastManagerForSocketIO;
+    ArrayList<String> listOfMessages=new ArrayList<>();
+    ArrayAdapter<String> adapter ;
+    boolean serviceStarted=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +83,79 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
+
+        String user=getIntent().getExtras().
+                getString("user_name");
+        Toast.makeText(
+                this,
+                "Welcome "+user,Toast.LENGTH_LONG).
+                show();
+        ((Button)findViewById(R.id.start_service_button)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent=new Intent(
+                        getApplicationContext(),SocketManagementService.class);
+                intent.putExtra("SERVER_HOST",((EditText)findViewById(R.id.server_ip_txt)).getText()+"");
+                intent.putExtra("SERVER_PORT",Integer.parseInt(((EditText)findViewById(R.id.server_port_txt)).getText()+""));
+                intent.setAction(SocketManagementService.ACTION_CONNECT);
+                startService(intent);
+                serviceStarted=true;
+            }
+        });
+
+        initializeGPSManager();
+        initializeOSM();
+        initializeBroadcastManagerForSocketIO();
+        adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, listOfMessages);
+    }
+
+    public void initializeGPSManager(){
+        gpsManager=new GPSManager(this,this);
+        gpsManager.initializeLocationManager();
+    }
+
+    public void initializeOSM(){
+        try{
+            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED){
+                ActivityCompat.requestPermissions(this,
+                        new String[]{
+                                Manifest.permission.
+                                        WRITE_EXTERNAL_STORAGE},1002);
+
+                return;
+            }
+            Context ctx = getApplicationContext();
+            Configuration.getInstance().load(ctx,
+                    PreferenceManager.
+                            getDefaultSharedPreferences(ctx));
+            map = (MapView) findViewById(R.id.map);
+            map.setTileSource(TileSourceFactory.MAPNIK);
+            this.mLocationOverlay =
+                    new MyLocationNewOverlay(
+                            new GpsMyLocationProvider(
+                                    this),map);
+            this.mLocationOverlay.enableMyLocation();
+            map.getOverlays().add(this.mLocationOverlay);
+        }catch (Exception error){
+            Toast.makeText(this,error.getMessage(),Toast.LENGTH_SHORT).show();
+
+        }
+    }
+
+    public void initializeBroadcastManagerForSocketIO(){
+        broadcastManagerForSocketIO=new BroadcastManager(this,
+                SocketManagementService.
+                        SOCKET_SERVICE_CHANNEL,this);
+    }
+
+    public void setMapCenter(Location location){
+        IMapController mapController =
+                map.getController();
+        mapController.setZoom(9.5);
+        GeoPoint startPoint = new GeoPoint(
+                location.getLatitude(), location.getLongitude());
+        mapController.setCenter(startPoint);
     }
 
     @Override
@@ -102,5 +213,93 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void MessageReceivedThroughBroadcastManager(String channel, String type, final String message) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                listOfMessages.add(message);
+                ((ListView)findViewById(R.id.messages_list_view)).setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+            }
+        });
+    }
+
+    @Override
+    public void ErrorAtBroadcastManager(final Exception error) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog.Builder builder=
+                        new AlertDialog.
+                                Builder(getApplicationContext());
+                builder.setTitle("BM Error")
+                        .setMessage(error.getMessage())
+                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                //TODO
+                            }
+                        });
+                builder.show();
+            }
+        });
+    }
+
+    @Override
+    public void needPermissions() {
+        this.requestPermissions(new String[]{ Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1001);
+    }
+
+    @Override
+    public void locationHasBeenReceived(final Location location) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ((TextView)findViewById(R.id.latitude_text_view)).setText(location.getLatitude()+"");
+                ((TextView)findViewById(R.id.longitude_text_view)).setText(location.getLongitude()+"");
+                if(map!=null)
+                    setMapCenter(location);
+
+            }
+        });
+
+        if(serviceStarted)
+            if(broadcastManagerForSocketIO!=null){
+                broadcastManagerForSocketIO.sendBroadcast(
+                        SocketManagementService.CLIENT_TO_SERVER_MESSAGE,
+                        location.getLatitude()+" / "+location.getLongitude());
+            }
+    }
+
+    @Override
+    public void gpsErrorHasBeenThrown(final Exception error) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog.Builder builder=
+                        new AlertDialog.
+                                Builder(getApplicationContext());
+                builder.setTitle("GPS Error")
+                        .setMessage(error.getMessage())
+                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                //TODO
+                            }
+                        });
+                builder.show();
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        if(broadcastManagerForSocketIO!=null){
+            broadcastManagerForSocketIO.unRegister();
+        }
+        super.onDestroy();
     }
 }
