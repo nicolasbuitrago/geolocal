@@ -10,6 +10,7 @@ import android.os.Bundle;
 
 import com.example.geolocal.broadcast.BroadcastManager;
 import com.example.geolocal.broadcast.IBroadcastManagerCaller;
+import com.example.geolocal.database.AppDatabase;
 import com.example.geolocal.gps.GPSManager;
 import com.example.geolocal.gps.IGPSManagerCaller;
 import com.example.geolocal.network.SocketManagementService;
@@ -32,6 +33,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.room.Room;
 
 import android.view.Menu;
 import android.widget.ArrayAdapter;
@@ -55,6 +57,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, IGPSManagerCaller, IBroadcastManagerCaller {
 
     GPSManager gpsManager;
+    AppDatabase appDatabase;
     private MapView map;
     private MyLocationNewOverlay mLocationOverlay;
     BroadcastManager broadcastManagerForSocketIO;
@@ -102,11 +105,22 @@ public class MainActivity extends AppCompatActivity
                 serviceStarted=true;
             }
         });
-
+        initializeDataBase();
         initializeGPSManager();
         initializeOSM();
         initializeBroadcastManagerForSocketIO();
         adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, listOfMessages);
+    }
+
+    public void initializeDataBase(){
+        try{
+            appDatabase= Room.
+                    databaseBuilder(this,AppDatabase.class,
+                            "app-database").
+                    fallbackToDestructiveMigration().build();
+        }catch (Exception error){
+            Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show();
+        }
     }
 
     public void initializeGPSManager(){
@@ -118,11 +132,7 @@ public class MainActivity extends AppCompatActivity
         try{
             if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED){
-                ActivityCompat.requestPermissions(this,
-                        new String[]{
-                                Manifest.permission.
-                                        WRITE_EXTERNAL_STORAGE},1002);
-
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1002);
                 return;
             }
             Context ctx = getApplicationContext();
@@ -139,7 +149,6 @@ public class MainActivity extends AppCompatActivity
             map.getOverlays().add(this.mLocationOverlay);
         }catch (Exception error){
             Toast.makeText(this,error.getMessage(),Toast.LENGTH_SHORT).show();
-
         }
     }
 
