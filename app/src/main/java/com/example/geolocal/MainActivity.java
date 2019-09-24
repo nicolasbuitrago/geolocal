@@ -11,6 +11,8 @@ import android.os.Bundle;
 import com.example.geolocal.broadcast.BroadcastManager;
 import com.example.geolocal.broadcast.IBroadcastManagerCaller;
 import com.example.geolocal.database.AppDatabase;
+import com.example.geolocal.database.DatabaseManager;
+import com.example.geolocal.database.DatabaseManagerService;
 import com.example.geolocal.gps.GPSManager;
 import com.example.geolocal.gps.IGPSManagerCaller;
 import com.example.geolocal.network.SocketManagementService;
@@ -61,9 +63,10 @@ public class MainActivity extends AppCompatActivity
     private MapView map;
     private MyLocationNewOverlay mLocationOverlay;
     BroadcastManager broadcastManagerForSocketIO;
+    BroadcastManager broadcastManagerForDatabase;
     ArrayList<String> listOfMessages=new ArrayList<>();
     ArrayAdapter<String> adapter ;
-    boolean serviceStarted=false;
+    boolean socketServiceStarted=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,13 +105,18 @@ public class MainActivity extends AppCompatActivity
                 intent.putExtra("SERVER_PORT",Integer.parseInt(((EditText)findViewById(R.id.server_port_txt)).getText()+""));
                 intent.setAction(SocketManagementService.ACTION_CONNECT);
                 startService(intent);
-                serviceStarted=true;
+                socketServiceStarted=true;
             }
         });
-        initializeDataBase();
+        Intent intent=new Intent(getApplicationContext(),DatabaseManagerService.class);
+        intent.setAction(DatabaseManagerService.ACTION_CONNECT);
+        startService(intent);
+
+        //initializeDataBase();
         initializeGPSManager();
         initializeOSM();
         initializeBroadcastManagerForSocketIO();
+        initializeBroadcastManagerForDatabase();
         adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, listOfMessages);
     }
 
@@ -136,15 +144,10 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
             Context ctx = getApplicationContext();
-            Configuration.getInstance().load(ctx,
-                    PreferenceManager.
-                            getDefaultSharedPreferences(ctx));
+            Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
             map = (MapView) findViewById(R.id.map);
             map.setTileSource(TileSourceFactory.MAPNIK);
-            this.mLocationOverlay =
-                    new MyLocationNewOverlay(
-                            new GpsMyLocationProvider(
-                                    this),map);
+            this.mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this),map);
             this.mLocationOverlay.enableMyLocation();
             map.getOverlays().add(this.mLocationOverlay);
         }catch (Exception error){
@@ -156,6 +159,12 @@ public class MainActivity extends AppCompatActivity
         broadcastManagerForSocketIO=new BroadcastManager(this,
                 SocketManagementService.
                         SOCKET_SERVICE_CHANNEL,this);
+    }
+
+    public void initializeBroadcastManagerForDatabase(){
+        broadcastManagerForDatabase=new BroadcastManager(this,
+                DatabaseManagerService.
+                        DATABASE_SERVICE_CHANNEL,this);
     }
 
     public void setMapCenter(Location location){
@@ -208,9 +217,9 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_home) {
             // Handle the camera action
         } else if (id == R.id.nav_gallery) {
-
+            broadcastManagerForDatabase.sendBroadcast(DatabaseManagerService.SAVE_USER,"nicolas;nicolas@email.com;12345678");
         } else if (id == R.id.nav_slideshow) {
-
+            broadcastManagerForDatabase.sendBroadcast(DatabaseManagerService.GET_USER,"nicolas@email.com;12345678");
         } else if (id == R.id.nav_tools) {
 
         } else if (id == R.id.nav_share) {
@@ -275,7 +284,7 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        if(serviceStarted)
+        if(socketServiceStarted)
             if(broadcastManagerForSocketIO!=null){
                 broadcastManagerForSocketIO.sendBroadcast(
                         SocketManagementService.CLIENT_TO_SERVER_MESSAGE,
@@ -308,6 +317,9 @@ public class MainActivity extends AppCompatActivity
     protected void onDestroy() {
         if(broadcastManagerForSocketIO!=null){
             broadcastManagerForSocketIO.unRegister();
+        }
+        if(broadcastManagerForDatabase!=null){
+            broadcastManagerForDatabase.unRegister();
         }
         super.onDestroy();
     }

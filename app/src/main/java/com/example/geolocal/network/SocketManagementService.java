@@ -112,7 +112,6 @@ public class SocketManagementService extends IntentService implements IClientSoc
     @Override
     public void MessageReceived(String message) {
         try {
-
             if(broadcastManager!=null){
                 broadcastManager.sendBroadcast( SERVER_TO_CLIENT_MESSAGE,message);
             }

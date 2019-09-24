@@ -18,8 +18,8 @@ public interface UserDao {
     @Query("select * from User  WHERE user_id IN (:userIds)")
     List<User> loadAllByIds(int[] userIds);
 
-    @Query("select * from User  WHERE email = :userEmail")
-    List<User> getUserbyEmail(String userEmail);
+    @Query("select * from User  WHERE email = :userEmail LIMIT 1")
+    User getUserbyEmail(String userEmail);
 
     @Query("select * from User  WHERE user_name = :userName")
     List<User> getUserbyUserName(String userName);
