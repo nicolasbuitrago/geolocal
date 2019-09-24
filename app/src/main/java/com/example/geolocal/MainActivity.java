@@ -84,12 +84,12 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
 
-        String user=getIntent().getExtras().
+        /*String user=getIntent().getExtras().
                 getString("user_name");
         Toast.makeText(
                 this,
                 "Welcome "+user,Toast.LENGTH_LONG).
-                show();
+                show();*/
         ((Button)findViewById(R.id.start_service_button)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
