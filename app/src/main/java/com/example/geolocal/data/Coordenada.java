@@ -1,5 +1,8 @@
 package com.example.geolocal.data;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
@@ -13,7 +16,7 @@ import java.util.Date;
         parentColumns = "user_id",
         childColumns = "user_id",
         onDelete = ForeignKey.CASCADE))
-public class Coordenada {
+public class Coordenada implements Parcelable {
 
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "coordenada_id")
@@ -30,5 +33,37 @@ public class Coordenada {
 
     @ColumnInfo(name = "latitud")
     public double latitud;
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeInt(coordenadaId);
+        parcel.writeInt(userId);
+        parcel.writeSerializable(date);
+        parcel.writeDouble(longitud);
+        parcel.writeDouble(latitud);
+    }
+
+    // Creator
+    public static final Parcelable.Creator CREATOR
+            = new Parcelable.Creator() {
+        public Coordenada createFromParcel(Parcel parcel) {
+            Coordenada c = new Coordenada();
+            c.coordenadaId = parcel.readInt();
+            c.userId = parcel.readInt();
+            c.date = (Date) parcel.readSerializable();
+            c.longitud = parcel.readDouble();
+            c.latitud = parcel.readDouble();
+            return c;
+        }
+
+        public Coordenada[] newArray(int size) {
+            return new Coordenada[size];
+        }
+    };
 
 }

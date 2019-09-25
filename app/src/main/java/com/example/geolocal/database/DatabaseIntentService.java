@@ -7,9 +7,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
 
+import com.example.geolocal.data.Coordenada;
 import com.example.geolocal.data.User;
 import com.example.geolocal.receiver.DatabaseResultReceiver;
 import com.example.geolocal.receiver.IResultReceiverCaller;
+import com.google.gson.Gson;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -22,15 +28,16 @@ public class DatabaseIntentService extends IntentService {
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
     private static final String ACTION_SAVE_USER = "com.example.geolocal.database.action.SAVE_USER";
     private static final String ACTION_GET_USER = "com.example.geolocal.database.action.GET_USER";
-
-    public static final String ACTION_ANSWER = "com.example.geolocal.database.action.ACTION_ANSWER";
+    private static final String ACTION_GET_COORDENADAS = "com.example.geolocal.database.action.GET_COORDENADAS";
 
     private static final String EXTRA_RECEIVER = "com.example.geolocal.database.extra.RECEIVER";
     private static final String EXTRA_USER = "com.example.geolocal.database.extra.USER";
+    private static final String EXTRA_USER_ID = "com.example.geolocal.database.extra.USER_ID";
     private static final String EXTRA_USER_EMAIL = "com.example.geolocal.database.extra.USER_EMAIL";
     private static final String EXTRA_USER_PASSWORD = "com.example.geolocal.database.extra.USER_PASSWORD";
     private static final String EXTRA_USER_USERNAME = "com.example.geolocal.database.extra.USER_USERNAME";
-    private static final String EXTRA_DATE = "com.example.geolocal.database.extra.DATE";
+    private static final String EXTRA_DATE_FROM = "com.example.geolocal.database.extra.DATE_FROM";
+    private static final String EXTRA_DATE_TO = "com.example.geolocal.database.extra.DATE_TO";
 
     private AppDatabase appDatabase;
 
@@ -44,7 +51,6 @@ public class DatabaseIntentService extends IntentService {
      *
      * @see IntentService
      */
-    // TODO: Customize helper method
     public static void startActionSaveUser(Context context, IResultReceiverCaller caller, User user) {
         DatabaseResultReceiver receiver = new DatabaseResultReceiver(new Handler());
         receiver.setReceiver(caller);
@@ -56,12 +62,11 @@ public class DatabaseIntentService extends IntentService {
     }
 
     /**
-     * Starts this service to perform action Baz with the given parameters. If
+     * Starts this service to perform action get users with the given parameters. If
      * the service is already performing a task this action will be queued.
      *
      * @see IntentService
      */
-    // TODO: Customize helper method
     public static void startActionGetUser(Context context, IResultReceiverCaller caller, String email) {
         DatabaseResultReceiver receiver = new DatabaseResultReceiver(new Handler());
         receiver.setReceiver(caller);
@@ -69,6 +74,22 @@ public class DatabaseIntentService extends IntentService {
         intent.setAction(ACTION_GET_USER);
         intent.putExtra(EXTRA_RECEIVER, receiver);
         intent.putExtra(EXTRA_USER_EMAIL, email);
+        context.startService(intent);
+    }
+
+    /**
+     *
+     *
+     */
+    public static void startActionGetCoordenadas(Context context, IResultReceiverCaller caller, int userId, Date from, Date to) {
+        DatabaseResultReceiver receiver = new DatabaseResultReceiver(new Handler());
+        receiver.setReceiver(caller);
+        Intent intent = new Intent(context, DatabaseIntentService.class);
+        intent.setAction(ACTION_GET_COORDENADAS);
+        intent.putExtra(EXTRA_RECEIVER, receiver);
+        intent.putExtra(EXTRA_USER_ID, userId);
+        intent.putExtra(EXTRA_DATE_FROM, from);
+        intent.putExtra(EXTRA_DATE_TO, to);
         context.startService(intent);
     }
 
@@ -83,8 +104,12 @@ public class DatabaseIntentService extends IntentService {
                 handleActionSaveUser(receiver, user);
             } else if (ACTION_GET_USER.equals(action)) {
                 final String userEmail = intent.getStringExtra(EXTRA_USER_EMAIL);
-                final String userPassword = intent.getStringExtra(EXTRA_USER_PASSWORD);
-                handleActionGetUser(receiver, userEmail, userPassword);
+                handleActionGetUser(receiver, userEmail);
+            } else if(ACTION_GET_COORDENADAS.equals(action)){
+                final int userId = intent.getIntExtra(EXTRA_USER_ID,-1);
+                final Date from = intent.getParcelableExtra(EXTRA_DATE_FROM);
+                final Date to = intent.getParcelableExtra(EXTRA_DATE_TO);
+                handleActionGetCoordenadas(receiver,userId,from,to);
             }
         }
     }
@@ -96,7 +121,8 @@ public class DatabaseIntentService extends IntentService {
     private void handleActionSaveUser(ResultReceiver receiver, User user) {
         Bundle bundle = new Bundle();
         appDatabase.UserDao().insertAll(user);
-        bundle.putSerializable(ACTION_ANSWER,user);
+        bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
+        bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER,user);
         receiver.send(DatabaseResultReceiver.RESULT_CODE_OK,bundle);
     }
 
@@ -104,14 +130,33 @@ public class DatabaseIntentService extends IntentService {
      * Handle action get user in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionGetUser(ResultReceiver receiver, String email, String password) {
+    private void handleActionGetUser(ResultReceiver receiver, String email) {
         Bundle bundle = new Bundle();
         User user = appDatabase.UserDao().getUserbyEmail(email);
         if(user!=null) {
-            bundle.putSerializable(ACTION_ANSWER, user);
+            bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
+            bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER, user);
             receiver.send(DatabaseResultReceiver.RESULT_CODE_OK, bundle);
         }else{
             bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("Email invalido"));
+            receiver.send(DatabaseResultReceiver.RESULT_CODE_ERROR, bundle);
+        }
+    }
+
+    /**
+     * Handle action get coordenadas in the provided background thread with the provided
+     * parameters.
+     */
+    private void handleActionGetCoordenadas(ResultReceiver receiver, int userId, Date from, Date to) {
+        Bundle bundle = new Bundle();
+        List<Coordenada> coordenadas= appDatabase.CoordenadaDao().findCoordenadaBetweenDates(userId,from,to);
+        if(coordenadas!=null) {
+            ArrayList<Coordenada> cs = new ArrayList(coordenadas);
+            bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_COORDENADAS);
+            bundle.putParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER, cs);
+            receiver.send(DatabaseResultReceiver.RESULT_CODE_OK, bundle);
+        }else{
+            bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("No hay coordenadas"));
             receiver.send(DatabaseResultReceiver.RESULT_CODE_ERROR, bundle);
         }
     }

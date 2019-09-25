@@ -10,6 +10,7 @@ import android.os.Bundle;
 
 import com.example.geolocal.broadcast.BroadcastManager;
 import com.example.geolocal.broadcast.IBroadcastManagerCaller;
+import com.example.geolocal.data.Coordenada;
 import com.example.geolocal.data.User;
 import com.example.geolocal.database.AppDatabase;
 import com.example.geolocal.database.DatabaseIntentService;
@@ -33,6 +34,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import android.view.MenuItem;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.gson.Gson;
 
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -57,6 +59,7 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, IGPSManagerCaller, IBroadcastManagerCaller, IResultReceiverCaller {
@@ -316,8 +319,14 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onReceiveResult(Bundle bundle) {
-        User user = (User) bundle.getSerializable(DatabaseIntentService.ACTION_ANSWER);
-        Toast.makeText(this,"Welcome "+user.userName,Toast.LENGTH_SHORT).show();
+        String result = bundle.getString(DatabaseResultReceiver.PARAM_RESULT);
+        if(result.equals(DatabaseResultReceiver.TYPE_USER)) {
+            User user = (User) bundle.getSerializable(DatabaseResultReceiver.ACTION_ANSWER);
+            Toast.makeText(this, "Welcome " + user.userName, Toast.LENGTH_SHORT).show();
+        }else if(result.equals(DatabaseResultReceiver.TYPE_COORDENADAS)){
+            ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER);
+            Toast.makeText(this, "Coordenadas: " + coordenadas.size(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
