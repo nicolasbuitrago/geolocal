@@ -10,15 +10,18 @@ import android.os.Bundle;
 
 import com.example.geolocal.broadcast.BroadcastManager;
 import com.example.geolocal.broadcast.IBroadcastManagerCaller;
+import com.example.geolocal.data.User;
 import com.example.geolocal.database.AppDatabase;
-import com.example.geolocal.database.DatabaseManager;
-import com.example.geolocal.database.DatabaseManagerService;
+import com.example.geolocal.database.DatabaseIntentService;
 import com.example.geolocal.gps.GPSManager;
 import com.example.geolocal.gps.IGPSManagerCaller;
 import com.example.geolocal.network.SocketManagementService;
+import com.example.geolocal.receiver.DatabaseResultReceiver;
+import com.example.geolocal.receiver.IResultReceiverCaller;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.View;
 
@@ -56,14 +59,13 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, IGPSManagerCaller, IBroadcastManagerCaller {
+        implements NavigationView.OnNavigationItemSelectedListener, IGPSManagerCaller, IBroadcastManagerCaller, IResultReceiverCaller {
 
     GPSManager gpsManager;
     AppDatabase appDatabase;
     private MapView map;
     private MyLocationNewOverlay mLocationOverlay;
     BroadcastManager broadcastManagerForSocketIO;
-    BroadcastManager broadcastManagerForDatabase;
     ArrayList<String> listOfMessages=new ArrayList<>();
     ArrayAdapter<String> adapter ;
     boolean socketServiceStarted=false;
@@ -108,24 +110,17 @@ public class MainActivity extends AppCompatActivity
                 socketServiceStarted=true;
             }
         });
-        Intent intent=new Intent(getApplicationContext(),DatabaseManagerService.class);
-        intent.setAction(DatabaseManagerService.ACTION_CONNECT);
-        startService(intent);
 
-        //initializeDataBase();
+        initializeDataBase();
         initializeGPSManager();
         initializeOSM();
         initializeBroadcastManagerForSocketIO();
-        initializeBroadcastManagerForDatabase();
         adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, listOfMessages);
     }
 
     public void initializeDataBase(){
         try{
-            appDatabase= Room.
-                    databaseBuilder(this,AppDatabase.class,
-                            "app-database").
-                    fallbackToDestructiveMigration().build();
+            appDatabase= AppDatabase.getDatabaseInstance(getApplicationContext());
         }catch (Exception error){
             Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show();
         }
@@ -159,12 +154,6 @@ public class MainActivity extends AppCompatActivity
         broadcastManagerForSocketIO=new BroadcastManager(this,
                 SocketManagementService.
                         SOCKET_SERVICE_CHANNEL,this);
-    }
-
-    public void initializeBroadcastManagerForDatabase(){
-        broadcastManagerForDatabase=new BroadcastManager(this,
-                DatabaseManagerService.
-                        DATABASE_SERVICE_CHANNEL,this);
     }
 
     public void setMapCenter(Location location){
@@ -217,9 +206,14 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_home) {
             // Handle the camera action
         } else if (id == R.id.nav_gallery) {
-            broadcastManagerForDatabase.sendBroadcast(DatabaseManagerService.SAVE_USER,"nicolas;nicolas@email.com;12345678");
+            User user = new User();
+            user.userEmail="nicolas@email.com";
+            user.userName="nicolas";
+            user.password="12345678";
+
+            DatabaseIntentService.startActionSaveUser(getApplicationContext(),this,user);
         } else if (id == R.id.nav_slideshow) {
-            broadcastManagerForDatabase.sendBroadcast(DatabaseManagerService.GET_USER,"nicolas@email.com;12345678");
+            DatabaseIntentService.startActionGetUser(getApplicationContext(),this,"nicolas@email.com");
         } else if (id == R.id.nav_tools) {
 
         } else if (id == R.id.nav_share) {
@@ -235,14 +229,16 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void MessageReceivedThroughBroadcastManager(String channel, String type, final String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                listOfMessages.add(message);
-                ((ListView)findViewById(R.id.messages_list_view)).setAdapter(adapter);
-                adapter.notifyDataSetChanged();
-            }
-        });
+        if(channel.equals(SocketManagementService.SOCKET_SERVICE_CHANNEL)){
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    listOfMessages.add(message);
+                    ((ListView)findViewById(R.id.messages_list_view)).setAdapter(adapter);
+                    adapter.notifyDataSetChanged();
+                }
+            });
+        }
     }
 
     @Override
@@ -297,12 +293,9 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                AlertDialog.Builder builder=
-                        new AlertDialog.
-                                Builder(getApplicationContext());
-                builder.setTitle("GPS Error")
-                        .setMessage(error.getMessage())
-                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                AlertDialog.Builder builder= new AlertDialog.Builder(getApplicationContext());
+                builder.setTitle("GPS Error").setMessage(error.getMessage()).setPositiveButton("Ok",
+                        new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 //TODO
@@ -318,9 +311,17 @@ public class MainActivity extends AppCompatActivity
         if(broadcastManagerForSocketIO!=null){
             broadcastManagerForSocketIO.unRegister();
         }
-        if(broadcastManagerForDatabase!=null){
-            broadcastManagerForDatabase.unRegister();
-        }
         super.onDestroy();
+    }
+
+    @Override
+    public void onReceiveResult(Bundle bundle) {
+        User user = (User) bundle.getSerializable(DatabaseIntentService.ACTION_ANSWER);
+        Toast.makeText(this,"Welcome "+user.userName,Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onReceiveError(Exception exception) {
+        Toast.makeText(this,exception.getMessage(),Toast.LENGTH_SHORT).show();
     }
 }
