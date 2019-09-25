@@ -10,6 +10,7 @@ public class DatabaseResultReceiver extends ResultReceiver {
     public static final String PARAM_EXCEPTION = "com.example.geolocal.receiver.EXCEPTION";
     public static final String PARAM_RESULT = "com.example.geolocal.receiver.PARAM_RESULT";
     public static final String ACTION_ANSWER = "com.example.geolocal.receiver.ACTION_ANSWER";
+    public static final String TYPE_COORDENADA = "com.example.geolocal.receiver.TYPE_COORDENADA";
     public static final String TYPE_COORDENADAS = "com.example.geolocal.receiver.TYPE_COORDENADAS";
     public static final String TYPE_USER = "com.example.geolocal.receiver.TYPE_USER";
     public static final String TYPE_BOOLEAN = "com.example.geolocal.receiver.TYPE_USER";

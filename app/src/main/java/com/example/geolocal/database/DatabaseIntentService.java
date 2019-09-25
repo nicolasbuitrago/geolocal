@@ -14,6 +14,7 @@ import com.example.geolocal.receiver.IResultReceiverCaller;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -29,6 +30,8 @@ public class DatabaseIntentService extends IntentService {
     private static final String ACTION_SAVE_USER = "com.example.geolocal.database.action.SAVE_USER";
     private static final String ACTION_GET_USER = "com.example.geolocal.database.action.GET_USER";
     private static final String ACTION_GET_COORDENADAS = "com.example.geolocal.database.action.GET_COORDENADAS";
+    private static final String ACTION_SAVE_COORDENADA = "com.example.geolocal.database.action.SAVE_COORDENADA";
+    private static final String ACTION_SAVE_COORDENADAS = "com.example.geolocal.database.action.SAVE_COORDENADAS";
 
     private static final String EXTRA_RECEIVER = "com.example.geolocal.database.extra.RECEIVER";
     private static final String EXTRA_USER = "com.example.geolocal.database.extra.USER";
@@ -36,6 +39,8 @@ public class DatabaseIntentService extends IntentService {
     private static final String EXTRA_USER_EMAIL = "com.example.geolocal.database.extra.USER_EMAIL";
     private static final String EXTRA_USER_PASSWORD = "com.example.geolocal.database.extra.USER_PASSWORD";
     private static final String EXTRA_USER_USERNAME = "com.example.geolocal.database.extra.USER_USERNAME";
+    private static final String EXTRA_COORDENADA = "com.example.geolocal.database.extra.COORDENADA";
+    private static final String EXTRA_COORDENADAS = "com.example.geolocal.database.extra.COORDENADAS";
     private static final String EXTRA_DATE_FROM = "com.example.geolocal.database.extra.DATE_FROM";
     private static final String EXTRA_DATE_TO = "com.example.geolocal.database.extra.DATE_TO";
 
@@ -93,6 +98,26 @@ public class DatabaseIntentService extends IntentService {
         context.startService(intent);
     }
 
+    public static void startActionSaveCoordenada(Context context, IResultReceiverCaller caller, Coordenada coordenada) {
+        DatabaseResultReceiver receiver = new DatabaseResultReceiver(new Handler());
+        receiver.setReceiver(caller);
+        Intent intent = new Intent(context, DatabaseIntentService.class);
+        intent.setAction(ACTION_SAVE_COORDENADA);
+        intent.putExtra(EXTRA_RECEIVER, receiver);
+        intent.putExtra(EXTRA_COORDENADA, coordenada);
+        context.startService(intent);
+    }
+
+    public static void startActionSaveCoordenadas(Context context, IResultReceiverCaller caller, ArrayList<Coordenada> coordenadas) {
+        DatabaseResultReceiver receiver = new DatabaseResultReceiver(new Handler());
+        receiver.setReceiver(caller);
+        Intent intent = new Intent(context, DatabaseIntentService.class);
+        intent.setAction(ACTION_SAVE_COORDENADAS);
+        intent.putExtra(EXTRA_RECEIVER, receiver);
+        intent.putExtra(EXTRA_COORDENADAS, coordenadas);
+        context.startService(intent);
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
@@ -110,6 +135,12 @@ public class DatabaseIntentService extends IntentService {
                 final Date from = intent.getParcelableExtra(EXTRA_DATE_FROM);
                 final Date to = intent.getParcelableExtra(EXTRA_DATE_TO);
                 handleActionGetCoordenadas(receiver,userId,from,to);
+            }else if(ACTION_SAVE_COORDENADA.equals(action)){
+                final Coordenada coordenada = intent.getParcelableExtra(EXTRA_COORDENADA);
+                handleActionSaveCoordenada(receiver, coordenada);
+            }else if(ACTION_SAVE_COORDENADAS.equals(action)){
+                final ArrayList<Coordenada> coordenadas = intent.getParcelableArrayListExtra(EXTRA_COORDENADAS);
+                handleActionSaveCoordenadas(receiver, coordenadas);
             }
         }
     }
@@ -159,5 +190,23 @@ public class DatabaseIntentService extends IntentService {
             bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("No hay coordenadas"));
             receiver.send(DatabaseResultReceiver.RESULT_CODE_ERROR, bundle);
         }
+    }
+
+    private void handleActionSaveCoordenada(ResultReceiver receiver, Coordenada coordenada) {
+        Bundle bundle = new Bundle();
+        appDatabase.CoordenadaDao().insertAll(coordenada);
+        bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_COORDENADA);
+        bundle.putParcelable(DatabaseResultReceiver.ACTION_ANSWER,coordenada);
+        receiver.send(DatabaseResultReceiver.RESULT_CODE_OK,bundle);
+    }
+
+    private void handleActionSaveCoordenadas(ResultReceiver receiver, ArrayList<Coordenada> coordenadas) {
+        Bundle bundle = new Bundle();
+        Object[] array = coordenadas.toArray();
+        Coordenada[] cs = Arrays.copyOf(array, array.length, Coordenada[].class);
+        appDatabase.CoordenadaDao().insertAll(cs);
+        bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_COORDENADAS);
+        bundle.putParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER,coordenadas);
+        receiver.send(DatabaseResultReceiver.RESULT_CODE_OK,bundle);
     }
 }
