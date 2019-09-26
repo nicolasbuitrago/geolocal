@@ -5,7 +5,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.util.Patterns;
 
 import com.example.geolocal.data.LoginRepository;

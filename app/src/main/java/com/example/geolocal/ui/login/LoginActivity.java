@@ -25,7 +25,9 @@ import android.widget.Toast;
 
 import com.example.geolocal.MainActivity;
 import com.example.geolocal.R;
+import com.example.geolocal.data.LoginRepository;
 import com.example.geolocal.database.AppDatabase;
+import com.example.geolocal.database.DatabaseIntentService;
 import com.example.geolocal.ui.login.LoginViewModel;
 import com.example.geolocal.ui.login.LoginViewModelFactory;
 
@@ -40,7 +42,7 @@ public class LoginActivity extends AppCompatActivity {
         loginViewModel = ViewModelProviders.of(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
 
-        AppDatabase.getDatabaseInstance(getApplicationContext());
+        DatabaseIntentService.startActionPopulate(getApplicationContext());
 
         final EditText usernameEditText = findViewById(R.id.username);
         final EditText passwordEditText = findViewById(R.id.password);
@@ -78,13 +80,12 @@ public class LoginActivity extends AppCompatActivity {
                     setResult(Activity.RESULT_OK);
 
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                    //intent.putExtra("user_name",usernameEditText.getText().toString());
+                    intent.putExtra("user", LoginRepository.getInstance(null).getUser());
                     startActivity(intent);
 
                     //Complete and destroy login activity once successful
                     finish();
                 }
-
             }
         });
 

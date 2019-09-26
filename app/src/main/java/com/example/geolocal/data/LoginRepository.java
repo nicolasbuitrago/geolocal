@@ -36,6 +36,10 @@ public class LoginRepository {
         return user != null;
     }
 
+    public User getUser(){
+        return user;
+    }
+
     public void logout() {
         user = null;
         dataSource.logout();

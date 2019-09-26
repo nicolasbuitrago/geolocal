@@ -26,6 +26,7 @@ import java.util.List;
  */
 public class DatabaseIntentService extends IntentService {
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
+    private static final String ACTION_POPULATE = "com.example.geolocal.database.action.POPULATE";
     private static final String ACTION_SAVE_USER = "com.example.geolocal.database.action.SAVE_USER";
     private static final String ACTION_GET_USER = "com.example.geolocal.database.action.GET_USER";
     private static final String ACTION_GET_COORDENADAS = "com.example.geolocal.database.action.GET_COORDENADAS";
@@ -47,6 +48,12 @@ public class DatabaseIntentService extends IntentService {
 
     public DatabaseIntentService() {
         super("DatabaseIntentService");
+    }
+
+    public static void startActionPopulate(Context context) {
+        Intent intent = new Intent(context, DatabaseIntentService.class);
+        intent.setAction(ACTION_POPULATE);
+        context.startService(intent);
     }
 
     /**
@@ -123,7 +130,9 @@ public class DatabaseIntentService extends IntentService {
             appDatabase = AppDatabase.getDatabaseInstance(this);
             final ResultReceiver receiver =  intent.getParcelableExtra(EXTRA_RECEIVER);
             final String action = intent.getAction();
-            if (ACTION_SAVE_USER.equals(action)) {
+            if (ACTION_POPULATE.equals(action)) {
+                handleActionPopulate();
+            } else if (ACTION_SAVE_USER.equals(action)) {
                 final User user = (User) intent.getSerializableExtra(EXTRA_USER);
                 handleActionSaveUser(receiver, user);
             } else if (ACTION_GET_USER.equals(action)) {
@@ -142,6 +151,10 @@ public class DatabaseIntentService extends IntentService {
                 handleActionSaveCoordenadas(receiver, coordenadas);
             }
         }
+    }
+
+    private void handleActionPopulate() {
+        appDatabase.populateDb();
     }
 
     /**

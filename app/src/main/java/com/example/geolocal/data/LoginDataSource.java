@@ -2,9 +2,7 @@ package com.example.geolocal.data;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.widget.Toast;
 
-import com.example.geolocal.R;
 import com.example.geolocal.data.model.User;
 import com.example.geolocal.database.DatabaseIntentService;
 import com.example.geolocal.receiver.DatabaseResultReceiver;

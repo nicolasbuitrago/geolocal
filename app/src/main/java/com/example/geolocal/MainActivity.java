@@ -56,13 +56,14 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, IGPSManagerCaller, IBroadcastManagerCaller, IResultReceiverCaller {
 
     GPSManager gpsManager;
-    AppDatabase appDatabase;
     private MapView map;
+    private User user;
     private MyLocationNewOverlay mLocationOverlay;
     BroadcastManager broadcastManagerForSocketIO;
     ArrayList<String> listOfMessages=new ArrayList<>();
@@ -91,6 +92,8 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
 
+        user = (User) getIntent().getSerializableExtra("user");
+
         /*String user=getIntent().getExtras().
                 getString("user_name");
         Toast.makeText(
@@ -110,19 +113,10 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        initializeDataBase();
         initializeGPSManager();
         initializeOSM();
         initializeBroadcastManagerForSocketIO();
         adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, listOfMessages);
-    }
-
-    public void initializeDataBase(){
-        try{
-            appDatabase= AppDatabase.getDatabaseInstance(getApplicationContext());
-        }catch (Exception error){
-            Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show();
-        }
     }
 
     public void initializeGPSManager(){
@@ -205,7 +199,7 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_home) {
             // Handle the camera action
         } else if (id == R.id.nav_gallery) {
-
+            DatabaseIntentService.startActionGetCoordenadas(getApplicationContext(),this,user.userId,new Date(1569503534000L), new Date(1569504122000L));
         } else if (id == R.id.nav_slideshow) {
             DatabaseIntentService.startActionGetUser(getApplicationContext(),this,"nicolas");
         } else if (id == R.id.nav_tools) {
@@ -315,7 +309,7 @@ public class MainActivity extends AppCompatActivity
         if(result.equals(DatabaseResultReceiver.TYPE_USER)) {
             User user = (User) bundle.getSerializable(DatabaseResultReceiver.ACTION_ANSWER);
 
-            Toast.makeText(this, "Welcome " + user.userEmail, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.welcome + user.userEmail, Toast.LENGTH_SHORT).show();
         }else if(result.equals(DatabaseResultReceiver.TYPE_COORDENADAS)){
             ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER);
             Toast.makeText(this, "Coordenadas: " + coordenadas.size(), Toast.LENGTH_SHORT).show();
