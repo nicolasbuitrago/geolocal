@@ -71,13 +71,13 @@ public class DatabaseIntentService extends IntentService {
      *
      * @see IntentService
      */
-    public static void startActionGetUser(Context context, IResultReceiverCaller caller, String email) {
+    public static void startActionGetUser(Context context, IResultReceiverCaller caller, String username) {
         DatabaseResultReceiver receiver = new DatabaseResultReceiver(new Handler());
         receiver.setReceiver(caller);
         Intent intent = new Intent(context, DatabaseIntentService.class);
         intent.setAction(ACTION_GET_USER);
         intent.putExtra(EXTRA_RECEIVER, receiver);
-        intent.putExtra(EXTRA_USER_EMAIL, email);
+        intent.putExtra(EXTRA_USER_USERNAME, username);
         context.startService(intent);
     }
 
@@ -127,8 +127,8 @@ public class DatabaseIntentService extends IntentService {
                 final User user = (User) intent.getSerializableExtra(EXTRA_USER);
                 handleActionSaveUser(receiver, user);
             } else if (ACTION_GET_USER.equals(action)) {
-                final String userEmail = intent.getStringExtra(EXTRA_USER_EMAIL);
-                handleActionGetUser(receiver, userEmail);
+                final String username = intent.getStringExtra(EXTRA_USER_USERNAME);
+                handleActionGetUser(receiver, username);
             } else if(ACTION_GET_COORDENADAS.equals(action)){
                 final int userId = intent.getIntExtra(EXTRA_USER_ID,-1);
                 final Date from = intent.getParcelableExtra(EXTRA_DATE_FROM);
@@ -160,15 +160,15 @@ public class DatabaseIntentService extends IntentService {
      * Handle action get user in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionGetUser(ResultReceiver receiver, String email) {
+    private void handleActionGetUser(ResultReceiver receiver, String username) {
         Bundle bundle = new Bundle();
-        User user = appDatabase.UserDao().getUserbyEmail(email);
+        User user = appDatabase.UserDao().getUserByUserName(username);
         if(user!=null) {
             bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
             bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER, user);
             receiver.send(DatabaseResultReceiver.RESULT_CODE_OK, bundle);
         }else{
-            bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("Email invalido"));
+            bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("Username invalido"));
             receiver.send(DatabaseResultReceiver.RESULT_CODE_ERROR, bundle);
         }
     }

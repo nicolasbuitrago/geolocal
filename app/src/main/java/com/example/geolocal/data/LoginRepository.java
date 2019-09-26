@@ -1,6 +1,9 @@
 package com.example.geolocal.data;
 
-import com.example.geolocal.data.model.LoggedInUser;
+import android.content.Context;
+
+import com.example.geolocal.data.model.User;
+import com.example.geolocal.ui.login.LoginViewModel;
 
 /**
  * Class that requests authentication and user information from the remote data source and
@@ -11,10 +14,11 @@ public class LoginRepository {
     private static volatile LoginRepository instance;
 
     private LoginDataSource dataSource;
+    private LoginViewModel loginViewModel;
 
     // If user credentials will be cached in local storage, it is recommended it be encrypted
     // @see https://developer.android.com/training/articles/keystore
-    private LoggedInUser user = null;
+    private User user = null;
 
     // private constructor : singleton access
     private LoginRepository(LoginDataSource dataSource) {
@@ -37,18 +41,23 @@ public class LoginRepository {
         dataSource.logout();
     }
 
-    private void setLoggedInUser(LoggedInUser user) {
+    private void setLoggedInUser(User user) {
         this.user = user;
         // If user credentials will be cached in local storage, it is recommended it be encrypted
         // @see https://developer.android.com/training/articles/keystore
     }
 
-    public Result<LoggedInUser> login(String username, String password) {
+    public void login(Context context, LoginViewModel lvm, String username, String password) {
         // handle login
-        Result<LoggedInUser> result = dataSource.login(username, password);
+        dataSource.login(context, username, password);
+        loginViewModel = lvm;
+    }
+
+    public Result<User> logged(Result<User> result){
         if (result instanceof Result.Success) {
-            setLoggedInUser(((Result.Success<LoggedInUser>) result).getData());
+            setLoggedInUser(((Result.Success<User>) result).getData());
         }
+        loginViewModel.logged(result);
         return result;
     }
 }

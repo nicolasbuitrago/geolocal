@@ -3,6 +3,7 @@ package com.example.geolocal.dao;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
 import com.example.geolocal.data.model.Coordenada;
@@ -27,6 +28,9 @@ public interface CoordenadaDao {
 
     @Query("select * from Coordenada  WHERE user_id = :userId AND date BETWEEN :from AND :to")
     List<Coordenada> findCoordenadaBetweenDates(int userId, Date from, Date to);
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    long insert(Coordenada coordenada);
 
     @Insert
     void insertAll(Coordenada... coordenadas);

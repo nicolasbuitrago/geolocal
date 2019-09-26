@@ -6,6 +6,7 @@ import android.os.Parcelable;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
+import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
@@ -33,6 +34,17 @@ public class Coordenada implements Parcelable {
 
     @ColumnInfo(name = "latitud")
     public double latitud;
+
+    @Ignore
+    public Coordenada(int userId, Date date, double longitud, double latitud) {
+        this.userId = userId;
+        this.date = date;
+        this.longitud = longitud;
+        this.latitud = latitud;
+    }
+
+    public Coordenada() {
+    }
 
     @Override
     public int describeContents() {

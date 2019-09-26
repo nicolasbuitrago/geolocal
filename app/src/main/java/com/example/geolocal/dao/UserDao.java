@@ -3,6 +3,7 @@ package com.example.geolocal.dao;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
 import com.example.geolocal.data.model.User;
@@ -22,11 +23,17 @@ public interface UserDao {
     User getUserbyEmail(String userEmail);
 
     @Query("select * from User  WHERE user_name = :userName")
-    List<User> getUserbyUserName(String userName);
+    User getUserByUserName(String userName);
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    long insert(User user);
 
     @Insert
     void insertAll(User... users);
 
     @Delete
     void delete(User user);
+
+    @Query("DELETE FROM User")
+    void deleteAll();
 }

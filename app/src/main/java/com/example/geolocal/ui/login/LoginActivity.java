@@ -25,6 +25,7 @@ import android.widget.Toast;
 
 import com.example.geolocal.MainActivity;
 import com.example.geolocal.R;
+import com.example.geolocal.database.AppDatabase;
 import com.example.geolocal.ui.login.LoginViewModel;
 import com.example.geolocal.ui.login.LoginViewModelFactory;
 
@@ -38,6 +39,8 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         loginViewModel = ViewModelProviders.of(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
+
+        AppDatabase.getDatabaseInstance(getApplicationContext());
 
         final EditText usernameEditText = findViewById(R.id.username);
         final EditText passwordEditText = findViewById(R.id.password);
@@ -72,15 +75,16 @@ public class LoginActivity extends AppCompatActivity {
                 }
                 if (loginResult.getSuccess() != null) {
                     updateUiWithUser(loginResult.getSuccess());
+                    setResult(Activity.RESULT_OK);
+
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    //intent.putExtra("user_name",usernameEditText.getText().toString());
+                    startActivity(intent);
+
+                    //Complete and destroy login activity once successful
+                    finish();
                 }
-                setResult(Activity.RESULT_OK);
 
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                //intent.putExtra("user_name",usernameEditText.getText().toString());
-                startActivity(intent);
-
-                //Complete and destroy login activity once successful
-                finish();
             }
         });
 
@@ -108,7 +112,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    loginViewModel.login(usernameEditText.getText().toString(),
+                    loginViewModel.login(getApplicationContext(),usernameEditText.getText().toString(),
                             passwordEditText.getText().toString());
                 }
                 return false;
@@ -119,7 +123,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 loadingProgressBar.setVisibility(View.VISIBLE);
-                loginViewModel.login(usernameEditText.getText().toString(),
+                loginViewModel.login(getApplicationContext(),usernameEditText.getText().toString(),
                         passwordEditText.getText().toString());
             }
         });
@@ -128,7 +132,7 @@ public class LoginActivity extends AppCompatActivity {
     private void updateUiWithUser(LoggedInUserView model) {
         String welcome = getString(R.string.welcome) + model.getDisplayName();
         // TODO : initiate successful logged in experience
-        Toast.makeText(getApplicationContext(), welcome, Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), welcome, Toast.LENGTH_SHORT).show();
     }
 
     private void showLoginFailed(@StringRes Integer errorString) {

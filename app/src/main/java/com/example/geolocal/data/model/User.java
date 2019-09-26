@@ -25,4 +25,10 @@ public class User implements Serializable {
     @ColumnInfo(name = "password")
     @NonNull
     public String password;
+
+    public User(@NonNull String userName, @NonNull String userEmail, @NonNull String password) {
+        this.userName = userName;
+        this.userEmail = userEmail;
+        this.password = password;
+    }
 }

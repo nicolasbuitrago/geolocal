@@ -205,14 +205,9 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_home) {
             // Handle the camera action
         } else if (id == R.id.nav_gallery) {
-            User user = new User();
-            user.userEmail="nicolas@email.com";
-            user.userName="nicolas";
-            user.password="12345678";
 
-            DatabaseIntentService.startActionSaveUser(getApplicationContext(),this,user);
         } else if (id == R.id.nav_slideshow) {
-            DatabaseIntentService.startActionGetUser(getApplicationContext(),this,"nicolas@email.com");
+            DatabaseIntentService.startActionGetUser(getApplicationContext(),this,"nicolas");
         } else if (id == R.id.nav_tools) {
 
 
@@ -320,7 +315,7 @@ public class MainActivity extends AppCompatActivity
         if(result.equals(DatabaseResultReceiver.TYPE_USER)) {
             User user = (User) bundle.getSerializable(DatabaseResultReceiver.ACTION_ANSWER);
 
-            Toast.makeText(this, "Welcome " + user.userName, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Welcome " + user.userEmail, Toast.LENGTH_SHORT).show();
         }else if(result.equals(DatabaseResultReceiver.TYPE_COORDENADAS)){
             ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER);
             Toast.makeText(this, "Coordenadas: " + coordenadas.size(), Toast.LENGTH_SHORT).show();
