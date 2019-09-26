@@ -22,8 +22,8 @@ public interface UserDao {
     @Query("select * from User  WHERE email = :userEmail LIMIT 1")
     User getUserbyEmail(String userEmail);
 
-    @Query("select * from User  WHERE user_name = :userName")
-    User getUserByUserName(String userName);
+    @Query("select * from User  WHERE (email = :email AND password = :password)")
+    User getUserForLogin(String email, String password);
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     long insert(User user);

@@ -15,9 +15,9 @@ import java.io.IOException;
  */
 public class LoginDataSource implements IResultReceiverCaller{
 
-    public void login(Context context, String username, String password) {
+    public void login(Context context, String email, String password) {
         try {
-            DatabaseIntentService.startActionGetUser(context,this,username);
+            DatabaseIntentService.startActionGetUserForLogin(context,this,email,password);
         } catch (Exception e) {
             LoginRepository.getInstance(this).logged(new Result.Error(new IOException("Error logging in")));
         }

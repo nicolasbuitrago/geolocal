@@ -201,7 +201,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_gallery) {
             DatabaseIntentService.startActionGetCoordenadas(getApplicationContext(),this,user.userId,new Date(1569503534000L), new Date(1569504122000L));
         } else if (id == R.id.nav_slideshow) {
-            DatabaseIntentService.startActionGetUser(getApplicationContext(),this,"nicolas");
+            DatabaseIntentService.startActionGetUser(getApplicationContext(),this,"nicolas@email.com");
         } else if (id == R.id.nav_tools) {
 
 
@@ -309,7 +309,7 @@ public class MainActivity extends AppCompatActivity
         if(result.equals(DatabaseResultReceiver.TYPE_USER)) {
             User user = (User) bundle.getSerializable(DatabaseResultReceiver.ACTION_ANSWER);
 
-            Toast.makeText(this, R.string.welcome + user.userEmail, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.welcome +" "+ user.userName, Toast.LENGTH_SHORT).show();
         }else if(result.equals(DatabaseResultReceiver.TYPE_COORDENADAS)){
             ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER);
             Toast.makeText(this, "Coordenadas: " + coordenadas.size(), Toast.LENGTH_SHORT).show();

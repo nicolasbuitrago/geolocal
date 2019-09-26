@@ -30,9 +30,9 @@ public class LoginViewModel extends ViewModel{
         return loginResult;
     }
 
-    public void login(Context context, String username, String password) {
+    public void login(Context context, String email, String password) {
         // can be launched in a separate asynchronous job
-        loginRepository.login(context,this, username, password);
+        loginRepository.login(context,this, email, password);
     }
 
     public void logged(Result<User> result){
@@ -40,14 +40,14 @@ public class LoginViewModel extends ViewModel{
             User data = ((Result.Success<User>) result).getData();
             loginResult.setValue(new LoginResult(new LoggedInUserView(data.userName)));
         } else {
-            loginFormState.setValue(new LoginFormState(R.string.invalid_username, null));
+            loginFormState.setValue(new LoginFormState(R.string.invalid_email, R.string.or_invalid_password));
             loginResult.setValue(new LoginResult(R.string.login_failed));
         }
     }
 
     public void loginDataChanged(String username, String password) {
         if (!isUserNameValid(username)) {
-            loginFormState.setValue(new LoginFormState(R.string.invalid_username, null));
+            loginFormState.setValue(new LoginFormState(R.string.invalid_email, null));
         } else if (!isPasswordValid(password)) {
             loginFormState.setValue(new LoginFormState(null, R.string.invalid_password));
         } else {

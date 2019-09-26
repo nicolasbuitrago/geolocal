@@ -50,7 +50,7 @@ public abstract class AppDatabase extends RoomDatabase {
         final CoordenadaDao coordenadaDao = mInstance.CoordenadaDao();
         userDao.deleteAll();
         User user1 = new User("nicolas","nicolas@email.com","12345678");
-        User user2 = new User("darklord","jair@email.com","12345678");
+        User user2 = new User("jair","jair@email.com","12345678");
 
         int u1 = (int)userDao.insert(user1);
         Coordenada c1 = new Coordenada(u1,new Date(1569503534000L),11.0085,-74.7986);

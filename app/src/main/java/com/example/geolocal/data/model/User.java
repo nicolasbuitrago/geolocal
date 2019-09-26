@@ -14,13 +14,13 @@ public class User implements Serializable {
     @NonNull
     public int userId;
 
-    @ColumnInfo(name = "user_name")
-    @NonNull
-    public String userName;
-
     @ColumnInfo(name = "email")
     @NonNull
     public String userEmail;
+
+    @ColumnInfo(name = "user_name")
+    @NonNull
+    public String userName;
 
     @ColumnInfo(name = "password")
     @NonNull
