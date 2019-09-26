@@ -7,11 +7,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
 
-import com.example.geolocal.data.Coordenada;
-import com.example.geolocal.data.User;
+import com.example.geolocal.data.model.Coordenada;
+import com.example.geolocal.data.model.User;
 import com.example.geolocal.receiver.DatabaseResultReceiver;
 import com.example.geolocal.receiver.IResultReceiverCaller;
-import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.Arrays;

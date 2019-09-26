@@ -5,7 +5,7 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 
-import com.example.geolocal.data.User;
+import com.example.geolocal.data.model.User;
 
 import java.util.List;
 

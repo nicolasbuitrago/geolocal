@@ -5,7 +5,7 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 
-import com.example.geolocal.data.Coordenada;
+import com.example.geolocal.data.model.Coordenada;
 
 import java.util.Date;
 import java.util.List;

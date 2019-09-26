@@ -1,4 +1,4 @@
-package com.example.geolocal.data;
+package com.example.geolocal.data.model;
 
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;

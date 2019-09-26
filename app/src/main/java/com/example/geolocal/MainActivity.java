@@ -10,8 +10,8 @@ import android.os.Bundle;
 
 import com.example.geolocal.broadcast.BroadcastManager;
 import com.example.geolocal.broadcast.IBroadcastManagerCaller;
-import com.example.geolocal.data.Coordenada;
-import com.example.geolocal.data.User;
+import com.example.geolocal.data.model.Coordenada;
+import com.example.geolocal.data.model.User;
 import com.example.geolocal.database.AppDatabase;
 import com.example.geolocal.database.DatabaseIntentService;
 import com.example.geolocal.gps.GPSManager;
@@ -22,7 +22,6 @@ import com.example.geolocal.receiver.IResultReceiverCaller;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.View;
 
@@ -34,13 +33,11 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import android.view.MenuItem;
 
 import com.google.android.material.navigation.NavigationView;
-import com.google.gson.Gson;
 
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.room.Room;
 
 import android.view.Menu;
 import android.widget.ArrayAdapter;
@@ -59,7 +56,6 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, IGPSManagerCaller, IBroadcastManagerCaller, IResultReceiverCaller {
@@ -219,6 +215,7 @@ public class MainActivity extends AppCompatActivity
             DatabaseIntentService.startActionGetUser(getApplicationContext(),this,"nicolas@email.com");
         } else if (id == R.id.nav_tools) {
 
+
         } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_send) {
@@ -322,6 +319,7 @@ public class MainActivity extends AppCompatActivity
         String result = bundle.getString(DatabaseResultReceiver.PARAM_RESULT);
         if(result.equals(DatabaseResultReceiver.TYPE_USER)) {
             User user = (User) bundle.getSerializable(DatabaseResultReceiver.ACTION_ANSWER);
+
             Toast.makeText(this, "Welcome " + user.userName, Toast.LENGTH_SHORT).show();
         }else if(result.equals(DatabaseResultReceiver.TYPE_COORDENADAS)){
             ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER);
