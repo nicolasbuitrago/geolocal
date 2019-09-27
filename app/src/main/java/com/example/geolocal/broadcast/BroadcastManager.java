@@ -7,9 +7,9 @@ import android.content.IntentFilter;
 
 public class BroadcastManager extends BroadcastReceiver {
 
-    private Context context;
+    protected Context context;
     private String channel;
-    private IBroadcastManagerCaller caller;
+    protected IBroadcastManagerCaller caller;
 
     public BroadcastManager(Context context,
                             String channel,
@@ -42,18 +42,16 @@ public class BroadcastManager extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String payload=intent.getExtras().getString("payload");
         String type=intent.getExtras().getString("type");
-        caller.
-                MessageReceivedThroughBroadcastManager(
-                        this.channel,type,payload);
+        caller.MessageReceivedThroughBroadcastManager(this.channel,type,payload);
     }
 
     public void sendBroadcast(String type,String message){
         try{
-            Intent intentToBesent=new Intent();
-            intentToBesent.setAction(channel);
-            intentToBesent.putExtra("payload",message);
-            intentToBesent.putExtra("type",type);
-            context.sendBroadcast(intentToBesent);
+            Intent intentToBeSent=new Intent();
+            intentToBeSent.setAction(channel);
+            intentToBeSent.putExtra("payload",message);
+            intentToBeSent.putExtra("type",type);
+            context.sendBroadcast(intentToBeSent);
         }catch (Exception error){
             caller.ErrorAtBroadcastManager(error);
         }

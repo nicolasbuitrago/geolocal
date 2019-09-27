@@ -6,10 +6,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import com.example.geolocal.broadcast.BroadcastManager;
 import com.example.geolocal.broadcast.IBroadcastManagerCaller;
+import com.example.geolocal.broadcast.NetworkChangeReceiver;
 import com.example.geolocal.data.model.Coordenada;
 import com.example.geolocal.data.model.User;
 import com.example.geolocal.database.AppDatabase;
@@ -66,9 +69,12 @@ public class MainActivity extends AppCompatActivity
     private User user;
     private MyLocationNewOverlay mLocationOverlay;
     BroadcastManager broadcastManagerForSocketIO;
+    NetworkChangeReceiver broadcastNetwork;
     ArrayList<String> listOfMessages=new ArrayList<>();
     ArrayAdapter<String> adapter ;
+    TextView networkStatusTextView;
     boolean socketServiceStarted=false;
+    boolean network;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,17 +86,17 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         });
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
+
+        initializeStatusNetwork();
 
         user = (User) getIntent().getSerializableExtra("user");
 
@@ -103,8 +109,7 @@ public class MainActivity extends AppCompatActivity
         ((Button)findViewById(R.id.start_service_button)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent=new Intent(
-                        getApplicationContext(),SocketManagementService.class);
+                Intent intent=new Intent(getApplicationContext(),SocketManagementService.class);
                 intent.putExtra("SERVER_HOST",((EditText)findViewById(R.id.server_ip_txt)).getText()+"");
                 intent.putExtra("SERVER_PORT",Integer.parseInt(((EditText)findViewById(R.id.server_port_txt)).getText()+""));
                 intent.setAction(SocketManagementService.ACTION_CONNECT);
@@ -116,7 +121,18 @@ public class MainActivity extends AppCompatActivity
         initializeGPSManager();
         initializeOSM();
         initializeBroadcastManagerForSocketIO();
+        initializeBroadcastNetwork();
         adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, listOfMessages);
+    }
+
+    private void initializeStatusNetwork(){
+        ConnectivityManager cm =
+                (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        network = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+        networkStatusTextView = ((TextView)findViewById(R.id.status_network_text));
+        networkStatusTextView.setText(network?R.string.status_online:R.string.status_offline);
     }
 
     public void initializeGPSManager(){
@@ -126,8 +142,7 @@ public class MainActivity extends AppCompatActivity
 
     public void initializeOSM(){
         try{
-            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED){
+            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1002);
                 return;
             }
@@ -147,6 +162,10 @@ public class MainActivity extends AppCompatActivity
         broadcastManagerForSocketIO=new BroadcastManager(this,
                 SocketManagementService.
                         SOCKET_SERVICE_CHANNEL,this);
+    }
+
+    public void initializeBroadcastNetwork(){
+        broadcastNetwork=new NetworkChangeReceiver(this,this);
     }
 
     public void setMapCenter(Location location){
@@ -216,6 +235,17 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    private void setNetworkStatus(boolean status){
+        network = status;
+        if(status){
+            networkStatusTextView.setText(R.string.status_online);
+            networkStatusTextView.setTextColor(getResources().getColor(R.color.green));
+        }else{
+            networkStatusTextView.setText(R.string.status_offline);
+            networkStatusTextView.setTextColor(getResources().getColor(R.color.red));
+        }
+    }
+
     @Override
     public void MessageReceivedThroughBroadcastManager(String channel, String type, final String message) {
         if(channel.equals(SocketManagementService.SOCKET_SERVICE_CHANNEL)){
@@ -227,6 +257,8 @@ public class MainActivity extends AppCompatActivity
                     adapter.notifyDataSetChanged();
                 }
             });
+        }else if(channel.equals(NetworkChangeReceiver.CHANNEL_NETWORK)){
+            setNetworkStatus(type.equals(NetworkChangeReceiver.TYPE_NETWORK_ONLINE));
         }
     }
 
@@ -299,6 +331,9 @@ public class MainActivity extends AppCompatActivity
     protected void onDestroy() {
         if(broadcastManagerForSocketIO!=null){
             broadcastManagerForSocketIO.unRegister();
+        }
+        if(broadcastNetwork!=null){
+            broadcastNetwork.unRegister();
         }
         super.onDestroy();
     }

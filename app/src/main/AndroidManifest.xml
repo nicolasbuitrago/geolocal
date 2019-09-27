@@ -17,7 +17,7 @@
         android:theme="@style/AppTheme">
         <service
             android:name=".database.DatabaseIntentService"
-            android:exported="false"></service>
+            android:exported="false"/>
         <service
             android:name=".network.SocketManagementService"
             android:exported="true" />
