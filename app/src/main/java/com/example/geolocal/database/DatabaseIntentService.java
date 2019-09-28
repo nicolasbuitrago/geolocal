@@ -142,29 +142,31 @@ public class DatabaseIntentService extends IntentService {
             appDatabase = AppDatabase.getDatabaseInstance(this);
             final ResultReceiver receiver =  intent.getParcelableExtra(EXTRA_RECEIVER);
             final String action = intent.getAction();
+            Bundle bundle = new Bundle();
+            bundle.putString(IResultReceiverCaller.EXTRA_TYPE,IResultReceiverCaller.DATABASE);
             if (ACTION_POPULATE.equals(action)) {
                 handleActionPopulate();
             } else if (ACTION_SAVE_USER.equals(action)) {
                 final User user = (User) intent.getSerializableExtra(EXTRA_USER);
-                handleActionSaveUser(receiver, user);
+                handleActionSaveUser(receiver, user, bundle);
             } else if (ACTION_GET_USER.equals(action)) {
                 final String email = intent.getStringExtra(EXTRA_USER_EMAIL);
-                handleActionGetUser(receiver, email);
+                handleActionGetUser(receiver, email, bundle);
             } else if (ACTION_GET_USER_FOR_LOGIN.equals(action)) {
                 final String email = intent.getStringExtra(EXTRA_USER_EMAIL);
                 final String password = intent.getStringExtra(EXTRA_USER_PASSWORD);
-                handleActionGetUserForLogin(receiver, email, password);
+                handleActionGetUserForLogin(receiver, email, password, bundle);
             } else if(ACTION_GET_COORDENADAS.equals(action)){
                 final int userId = intent.getIntExtra(EXTRA_USER_ID,-1);
                 final Date from = intent.getParcelableExtra(EXTRA_DATE_FROM);
                 final Date to = intent.getParcelableExtra(EXTRA_DATE_TO);
-                handleActionGetCoordenadas(receiver,userId,from,to);
+                handleActionGetCoordenadas(receiver,userId,from,to,bundle);
             }else if(ACTION_SAVE_COORDENADA.equals(action)){
                 final Coordenada coordenada = intent.getParcelableExtra(EXTRA_COORDENADA);
-                handleActionSaveCoordenada(receiver, coordenada);
+                handleActionSaveCoordenada(receiver, coordenada,bundle);
             }else if(ACTION_SAVE_COORDENADAS.equals(action)){
                 final ArrayList<Coordenada> coordenadas = intent.getParcelableArrayListExtra(EXTRA_COORDENADAS);
-                handleActionSaveCoordenadas(receiver, coordenadas);
+                handleActionSaveCoordenadas(receiver, coordenadas,bundle);
             }
         }
     }
@@ -177,8 +179,7 @@ public class DatabaseIntentService extends IntentService {
      * Handle action Save user in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionSaveUser(ResultReceiver receiver, User user) {
-        Bundle bundle = new Bundle();
+    private void handleActionSaveUser(ResultReceiver receiver, User user, Bundle bundle) {
         appDatabase.UserDao().insertAll(user);
         bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
         bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER,user);
@@ -189,28 +190,26 @@ public class DatabaseIntentService extends IntentService {
      * Handle action get user in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionGetUser(ResultReceiver receiver, String email) {
-        Bundle bundle = new Bundle();
+    private void handleActionGetUser(ResultReceiver receiver, String email, Bundle bundle) {
         User user = appDatabase.UserDao().getUserbyEmail(email);
         if(user!=null) {
             bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
             bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER, user);
             receiver.send(DatabaseResultReceiver.RESULT_CODE_OK, bundle);
         }else{
-            bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("Username invalido"));
+            bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("Invalid email"));
             receiver.send(DatabaseResultReceiver.RESULT_CODE_ERROR, bundle);
         }
     }
 
-    private void handleActionGetUserForLogin(ResultReceiver receiver, String email, String password) {
-        Bundle bundle = new Bundle();
+    private void handleActionGetUserForLogin(ResultReceiver receiver, String email, String password, Bundle bundle) {
         User user = appDatabase.UserDao().getUserForLogin(email,password);
         if(user!=null) {
             bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
             bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER, user);
             receiver.send(DatabaseResultReceiver.RESULT_CODE_OK, bundle);
         }else{
-            bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("Username invalido"));
+            bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("Invalid email"));
             receiver.send(DatabaseResultReceiver.RESULT_CODE_ERROR, bundle);
         }
     }
@@ -219,8 +218,7 @@ public class DatabaseIntentService extends IntentService {
      * Handle action get coordenadas in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionGetCoordenadas(ResultReceiver receiver, int userId, Date from, Date to) {
-        Bundle bundle = new Bundle();
+    private void handleActionGetCoordenadas(ResultReceiver receiver, int userId, Date from, Date to, Bundle bundle) {
         List<Coordenada> coordenadas= appDatabase.CoordenadaDao().findCoordenadaBetweenDates(userId,from,to);
         if(coordenadas!=null) {
             ArrayList<Coordenada> cs = new ArrayList(coordenadas);
@@ -233,16 +231,14 @@ public class DatabaseIntentService extends IntentService {
         }
     }
 
-    private void handleActionSaveCoordenada(ResultReceiver receiver, Coordenada coordenada) {
-        Bundle bundle = new Bundle();
+    private void handleActionSaveCoordenada(ResultReceiver receiver, Coordenada coordenada, Bundle bundle) {
         appDatabase.CoordenadaDao().insertAll(coordenada);
         bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_COORDENADA);
         bundle.putParcelable(DatabaseResultReceiver.ACTION_ANSWER,coordenada);
         receiver.send(DatabaseResultReceiver.RESULT_CODE_OK,bundle);
     }
 
-    private void handleActionSaveCoordenadas(ResultReceiver receiver, ArrayList<Coordenada> coordenadas) {
-        Bundle bundle = new Bundle();
+    private void handleActionSaveCoordenadas(ResultReceiver receiver, ArrayList<Coordenada> coordenadas, Bundle bundle) {
         Object[] array = coordenadas.toArray();
         Coordenada[] cs = Arrays.copyOf(array, array.length, Coordenada[].class);
         appDatabase.CoordenadaDao().insertAll(cs);

@@ -20,8 +20,10 @@ import com.example.geolocal.database.DatabaseIntentService;
 import com.example.geolocal.gps.GPSManager;
 import com.example.geolocal.gps.IGPSManagerCaller;
 import com.example.geolocal.network.SocketManagementService;
+import com.example.geolocal.network.WebServiceService;
 import com.example.geolocal.receiver.DatabaseResultReceiver;
 import com.example.geolocal.receiver.IResultReceiverCaller;
+import com.example.geolocal.receiver.WebServiceResultReceiver;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -224,7 +226,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_slideshow) {
             DatabaseIntentService.startActionGetUser(getApplicationContext(),this,"nicolas@email.com");
         } else if (id == R.id.nav_tools) {
-
+            WebServiceService.startActionGet(getApplicationContext(),this,"http://192.168.1.55:8080","nicolas");
 
         } else if (id == R.id.nav_share) {
 
@@ -342,14 +344,20 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onReceiveResult(Bundle bundle) {
-        String result = bundle.getString(DatabaseResultReceiver.PARAM_RESULT);
-        if(result.equals(DatabaseResultReceiver.TYPE_USER)) {
-            User user = (User) bundle.getSerializable(DatabaseResultReceiver.ACTION_ANSWER);
+        String type = bundle.getString(IResultReceiverCaller.EXTRA_TYPE);
+        if(type.equals(IResultReceiverCaller.WEBSERVICE)){
+            String result = bundle.getString(WebServiceResultReceiver.ACTION_ANSWER);
+            Toast.makeText(this,result,Toast.LENGTH_SHORT).show();
+        }else{
+            String result = bundle.getString(DatabaseResultReceiver.PARAM_RESULT);
+            if(result.equals(DatabaseResultReceiver.TYPE_USER)) {
+                User user = (User) bundle.getSerializable(DatabaseResultReceiver.ACTION_ANSWER);
 
-            Toast.makeText(this, R.string.welcome +" "+ user.userName, Toast.LENGTH_SHORT).show();
-        }else if(result.equals(DatabaseResultReceiver.TYPE_COORDENADAS)){
-            ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER);
-            Toast.makeText(this, "Coordenadas: " + coordenadas.size(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.welcome +" "+ user.userName, Toast.LENGTH_SHORT).show();
+            }else if(result.equals(DatabaseResultReceiver.TYPE_COORDENADAS)){
+                ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER);
+                Toast.makeText(this, "Coordenadas: " + coordenadas.size(), Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
