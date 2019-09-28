@@ -173,12 +173,12 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void setMapCenter(Location location){
-        IMapController mapController =
-                map.getController();
-        mapController.setZoom(9.5);
-        GeoPoint startPoint = new GeoPoint(
-                location.getLatitude(), location.getLongitude());
+        IMapController mapController = map.getController();
+
+        mapController.setZoom(14d);
+        GeoPoint startPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
         mapController.setCenter(startPoint);
+
     }
 
     @Override

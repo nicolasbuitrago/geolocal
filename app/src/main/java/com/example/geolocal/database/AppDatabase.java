@@ -49,7 +49,7 @@ public abstract class AppDatabase extends RoomDatabase {
         final UserDao userDao = mInstance.UserDao();
         final CoordenadaDao coordenadaDao = mInstance.CoordenadaDao();
         userDao.deleteAll();
-        User user1 = new User("nicolas","nicolas@email.com","12345678");
+        User user1 = new User("nicolas","n@e.c","123456");
         User user2 = new User("jair","jair@email.com","12345678");
 
         int u1 = (int)userDao.insert(user1);
