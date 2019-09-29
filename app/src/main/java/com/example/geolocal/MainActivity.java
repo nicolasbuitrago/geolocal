@@ -60,6 +60,10 @@ import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.ItemizedIconOverlay;
+import org.osmdroid.views.overlay.ItemizedOverlay;
+import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
+import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
@@ -85,6 +89,7 @@ public class MainActivity extends AppCompatActivity
     boolean network;
     private Date from, to;
     Button buttonDateFrom, buttonDateTo;
+    ItemizedOverlayWithFocus<OverlayItem> mOverlaysConsulta;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -301,14 +306,43 @@ public class MainActivity extends AppCompatActivity
                         date.set(Calendar.HOUR_OF_DAY, hourOfDay);
                         date.set(Calendar.MINUTE, minute);
                         //Log.v(TAG, "The choosen one " + date.getTime());
-                        DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
-                        button.setText(dateFormat.format(date.getTime()));
+                        button.setText(dateToString(date.getTime()));
                         if(isFrom) from = date.getTime();
                         else to = date.getTime();
                     }
                 }, currentDate.get(Calendar.HOUR_OF_DAY), currentDate.get(Calendar.MINUTE), false).show();
             }
         }, currentDate.get(Calendar.YEAR), currentDate.get(Calendar.MONTH), currentDate.get(Calendar.DATE)).show();
+    }
+
+    String dateToString(Date date){
+        DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss aaa");
+        return dateFormat.format(date);
+    }
+
+    void addOverLays(ArrayList<Coordenada> coordenadas){
+        final Context context = getApplicationContext();
+        ArrayList<OverlayItem> items = new ArrayList();
+        for (Coordenada c : coordenadas) {
+            items.add(new OverlayItem(user.userName,dateToString(c.date),new GeoPoint(c.latitud,c.longitud)));
+        }
+        //items.add(new OverlayItem("Title", "Description", new GeoPoint(11.010115,-74.827546))); // Lat/Lon decimal degrees
+        if(mOverlaysConsulta != null) map.getOverlays().remove(mOverlaysConsulta);
+        //the overlay
+        mOverlaysConsulta = new ItemizedOverlayWithFocus<OverlayItem>(items,
+                new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
+                    @Override
+                    public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
+                        //Toast.makeText(context,item.getTitle(),Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                    @Override
+                    public boolean onItemLongPress(final int index, final OverlayItem item) {
+                        return false;
+                    }
+                }, context);
+        mOverlaysConsulta.setFocusItemsOnTap(true);
+        map.getOverlays().add(mOverlaysConsulta);
     }
 
     @Override
@@ -334,7 +368,7 @@ public class MainActivity extends AppCompatActivity
             public void run() {
                 AlertDialog.Builder builder=
                         new AlertDialog.
-                                Builder(getApplicationContext());
+                                Builder(MainActivity.this);
                 builder.setTitle("BM Error")
                         .setMessage(error.getMessage())
                         .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -417,6 +451,7 @@ public class MainActivity extends AppCompatActivity
                 Toast.makeText(this, R.string.welcome +" "+ user.userName, Toast.LENGTH_SHORT).show();
             }else if(result.equals(DatabaseResultReceiver.TYPE_COORDENADAS)){
                 ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER);
+                addOverLays(coordenadas);
                 Toast.makeText(this, "Coordenadas: " + coordenadas.size(), Toast.LENGTH_SHORT).show();
             }
         }

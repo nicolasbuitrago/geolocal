@@ -36,7 +36,7 @@ public class Coordenada implements Parcelable {
     public double latitud;
 
     @Ignore
-    public Coordenada(int userId, Date date, double longitud, double latitud) {
+    public Coordenada(int userId, Date date, double latitud, double longitud) {
         this.userId = userId;
         this.date = date;
         this.longitud = longitud;
