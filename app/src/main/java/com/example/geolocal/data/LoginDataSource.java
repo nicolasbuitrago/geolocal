@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import com.example.geolocal.data.model.User;
 import com.example.geolocal.database.DatabaseIntentService;
+import com.example.geolocal.network.WebServiceService;
 import com.example.geolocal.receiver.IResultReceiverCaller;
 
 import java.io.IOException;
@@ -14,7 +15,10 @@ import java.io.IOException;
  */
 public class LoginDataSource implements IResultReceiverCaller{
 
+    private Context context;
+
     public void login(Context context, String email, String password) {
+        this.context = context;
         try {
             DatabaseIntentService.startActionGetUserForLogin(context,this,email,password);
         } catch (Exception e) {
@@ -23,6 +27,7 @@ public class LoginDataSource implements IResultReceiverCaller{
     }
 
     public void register(Context context, String email, String userName, String password) {
+        this.context = context;
         try {
             DatabaseIntentService.startActionGetUserForLogin(context,this,email,password);
             //WebServiceService.startActionSend(context,this,WebServiceService.URL,email);
@@ -43,7 +48,13 @@ public class LoginDataSource implements IResultReceiverCaller{
             String result = data.getString(IResultReceiverCaller.TYPE_ACTION_ANSWER);
             if(result.equals(IResultReceiverCaller.TYPE_USER)) {
                 User user = (User) data.getSerializable(IResultReceiverCaller.ACTION_ANSWER);
-                LoginRepository.getInstance(this).logged((user != null) ? new Result.Success<>(user) : new Result.Error(new IOException("Error logging in")));
+                if(user != null){
+                    LoginRepository.getInstance(this).logged( new Result.Success<>(user) );
+                } else{
+                    String email = data.getString(IResultReceiverCaller.EXTRA_EMAIL);
+                    String password = data.getString(IResultReceiverCaller.EXTRA_PASSWORD);
+                    WebServiceService.startActionGet(context,this,WebServiceService.URL,email+"/"+password,"login");
+                }
             }
         }else{
             String result = data.getString(IResultReceiverCaller.TYPE_ACTION_ANSWER);
