@@ -349,7 +349,7 @@ public class MainActivity extends AppCompatActivity
             String result = bundle.getString(WebServiceResultReceiver.ACTION_ANSWER);
             Toast.makeText(this,result,Toast.LENGTH_SHORT).show();
         }else{
-            String result = bundle.getString(DatabaseResultReceiver.PARAM_RESULT);
+            String result = bundle.getString(DatabaseResultReceiver.TYPE_ACTION_ANSWER);
             if(result.equals(DatabaseResultReceiver.TYPE_USER)) {
                 User user = (User) bundle.getSerializable(DatabaseResultReceiver.ACTION_ANSWER);
 

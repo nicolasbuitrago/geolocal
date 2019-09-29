@@ -45,6 +45,11 @@ public class LoginViewModel extends ViewModel{
         }
     }
 
+    public void register(Context context, String email, String userName, String password) {
+        // can be launched in a separate asynchronous job
+        loginRepository.register(context,this, email, userName, password);
+    }
+
     public void loginDataChanged(String username, String password) {
         if (!isUserNameValid(username)) {
             loginFormState.setValue(new LoginFormState(R.string.invalid_email, null));

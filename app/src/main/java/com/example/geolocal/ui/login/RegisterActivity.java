@@ -1,17 +1,14 @@
 package com.example.geolocal.ui.login;
 
-import android.app.Activity;
-
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
-
-import android.content.Intent;
-import android.os.Bundle;
-
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
@@ -26,29 +23,25 @@ import android.widget.Toast;
 import com.example.geolocal.MainActivity;
 import com.example.geolocal.R;
 import com.example.geolocal.data.LoginRepository;
-import com.example.geolocal.database.AppDatabase;
 import com.example.geolocal.database.DatabaseIntentService;
-import com.example.geolocal.ui.login.LoginViewModel;
-import com.example.geolocal.ui.login.LoginViewModelFactory;
 
-public class LoginActivity extends AppCompatActivity {
+
+public class RegisterActivity extends AppCompatActivity {
 
     private LoginViewModel loginViewModel;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
+        setContentView(R.layout.activity_register);
         loginViewModel = ViewModelProviders.of(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
 
-        DatabaseIntentService.startActionPopulate(getApplicationContext());
-
-        final EditText usernameEditText = findViewById(R.id.username);
-        final EditText passwordEditText = findViewById(R.id.password);
-        final Button loginButton = findViewById(R.id.login);
-        final Button registerButton = findViewById(R.id.register_login);
-        final ProgressBar loadingProgressBar = findViewById(R.id.loading);
+        final EditText emailEditText = findViewById(R.id.register_email);
+        final EditText userNameEditText = findViewById(R.id.register_user_name);
+        final EditText passwordEditText = findViewById(R.id.register_password);
+        final Button loginButton = findViewById(R.id.register);
+        final ProgressBar loadingProgressBar = findViewById(R.id.register_loading);
 
         loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {
             @Override
@@ -58,7 +51,7 @@ public class LoginActivity extends AppCompatActivity {
                 }
                 loginButton.setEnabled(loginFormState.isDataValid());
                 if (loginFormState.getUsernameError() != null) {
-                    usernameEditText.setError(getString(loginFormState.getUsernameError()));
+                    emailEditText.setError(getString(loginFormState.getUsernameError()));
                 }
                 if (loginFormState.getPasswordError() != null) {
                     passwordEditText.setError(getString(loginFormState.getPasswordError()));
@@ -103,18 +96,18 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                loginViewModel.loginDataChanged(usernameEditText.getText().toString(),
+                loginViewModel.loginDataChanged(emailEditText.getText().toString(),
                         passwordEditText.getText().toString());
             }
         };
-        usernameEditText.addTextChangedListener(afterTextChangedListener);
+        emailEditText.addTextChangedListener(afterTextChangedListener);
         passwordEditText.addTextChangedListener(afterTextChangedListener);
         passwordEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    loginViewModel.login(getApplicationContext(),usernameEditText.getText().toString(),
+                    loginViewModel.register(getApplicationContext(),emailEditText.getText().toString(), userNameEditText.getText().toString(),
                             passwordEditText.getText().toString());
                 }
                 return false;
@@ -125,16 +118,8 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 loadingProgressBar.setVisibility(View.VISIBLE);
-                loginViewModel.login(getApplicationContext(),usernameEditText.getText().toString(),
+                loginViewModel.register(getApplicationContext(),emailEditText.getText().toString(), userNameEditText.getText().toString(),
                         passwordEditText.getText().toString());
-            }
-        });
-
-        registerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), RegisterActivity.class);
-                startActivity(intent);
             }
         });
     }

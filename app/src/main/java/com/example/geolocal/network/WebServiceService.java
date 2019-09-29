@@ -21,11 +21,10 @@ import javax.net.ssl.HttpsURLConnection;
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
  */
 public class WebServiceService extends IntentService {
+
+    public static final String URL = "http://192.168.1.55:8080";
 
     private static final String ACTION_SEND = "com.example.geolocal.network.action.SEND";
     private static final String ACTION_GET = "com.example.geolocal.network.action.GET";

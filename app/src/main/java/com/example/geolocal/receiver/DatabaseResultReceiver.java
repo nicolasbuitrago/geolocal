@@ -8,7 +8,7 @@ public class DatabaseResultReceiver extends ResultReceiver {
     public static final int RESULT_CODE_OK = 200;
     public static final int RESULT_CODE_ERROR = 404;
     public static final String PARAM_EXCEPTION = "com.example.geolocal.receiver.EXCEPTION";
-    public static final String PARAM_RESULT = "com.example.geolocal.receiver.PARAM_RESULT";
+    public static final String TYPE_ACTION_ANSWER = "com.example.geolocal.receiver.TYPE_ACTION_ANSWER";
     public static final String ACTION_ANSWER = "com.example.geolocal.receiver.ACTION_ANSWER";
     public static final String TYPE_COORDENADA = "com.example.geolocal.receiver.TYPE_COORDENADA";
     public static final String TYPE_COORDENADAS = "com.example.geolocal.receiver.TYPE_COORDENADAS";

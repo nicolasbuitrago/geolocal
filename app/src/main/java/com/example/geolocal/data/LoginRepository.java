@@ -57,11 +57,17 @@ public class LoginRepository {
         loginViewModel = lvm;
     }
 
-    public Result<User> logged(Result<User> result){
+    void logged(Result<User> result){
         if (result instanceof Result.Success) {
             setLoggedInUser(((Result.Success<User>) result).getData());
         }
         loginViewModel.logged(result);
-        return result;
+        //return result;
+    }
+
+    public void register(Context context, LoginViewModel lvm, String email, String userName, String password) {
+        // handle register
+        dataSource.register(context, email, userName, password);
+        loginViewModel = lvm;
     }
 }

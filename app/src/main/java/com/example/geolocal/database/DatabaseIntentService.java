@@ -181,7 +181,7 @@ public class DatabaseIntentService extends IntentService {
      */
     private void handleActionSaveUser(ResultReceiver receiver, User user, Bundle bundle) {
         appDatabase.UserDao().insertAll(user);
-        bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
+        bundle.putString(DatabaseResultReceiver.TYPE_ACTION_ANSWER, DatabaseResultReceiver.TYPE_USER);
         bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER,user);
         receiver.send(DatabaseResultReceiver.RESULT_CODE_OK,bundle);
     }
@@ -193,7 +193,7 @@ public class DatabaseIntentService extends IntentService {
     private void handleActionGetUser(ResultReceiver receiver, String email, Bundle bundle) {
         User user = appDatabase.UserDao().getUserbyEmail(email);
         if(user!=null) {
-            bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
+            bundle.putString(DatabaseResultReceiver.TYPE_ACTION_ANSWER, DatabaseResultReceiver.TYPE_USER);
             bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER, user);
             receiver.send(DatabaseResultReceiver.RESULT_CODE_OK, bundle);
         }else{
@@ -205,7 +205,7 @@ public class DatabaseIntentService extends IntentService {
     private void handleActionGetUserForLogin(ResultReceiver receiver, String email, String password, Bundle bundle) {
         User user = appDatabase.UserDao().getUserForLogin(email,password);
         if(user!=null) {
-            bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
+            bundle.putString(DatabaseResultReceiver.TYPE_ACTION_ANSWER, DatabaseResultReceiver.TYPE_USER);
             bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER, user);
             receiver.send(DatabaseResultReceiver.RESULT_CODE_OK, bundle);
         }else{
@@ -222,7 +222,7 @@ public class DatabaseIntentService extends IntentService {
         List<Coordenada> coordenadas= appDatabase.CoordenadaDao().findCoordenadaBetweenDates(userId,from,to);
         if(coordenadas!=null) {
             ArrayList<Coordenada> cs = new ArrayList(coordenadas);
-            bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_COORDENADAS);
+            bundle.putString(DatabaseResultReceiver.TYPE_ACTION_ANSWER, DatabaseResultReceiver.TYPE_COORDENADAS);
             bundle.putParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER, cs);
             receiver.send(DatabaseResultReceiver.RESULT_CODE_OK, bundle);
         }else{
@@ -233,7 +233,7 @@ public class DatabaseIntentService extends IntentService {
 
     private void handleActionSaveCoordenada(ResultReceiver receiver, Coordenada coordenada, Bundle bundle) {
         appDatabase.CoordenadaDao().insertAll(coordenada);
-        bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_COORDENADA);
+        bundle.putString(DatabaseResultReceiver.TYPE_ACTION_ANSWER, DatabaseResultReceiver.TYPE_COORDENADA);
         bundle.putParcelable(DatabaseResultReceiver.ACTION_ANSWER,coordenada);
         receiver.send(DatabaseResultReceiver.RESULT_CODE_OK,bundle);
     }
@@ -242,7 +242,7 @@ public class DatabaseIntentService extends IntentService {
         Object[] array = coordenadas.toArray();
         Coordenada[] cs = Arrays.copyOf(array, array.length, Coordenada[].class);
         appDatabase.CoordenadaDao().insertAll(cs);
-        bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_COORDENADAS);
+        bundle.putString(DatabaseResultReceiver.TYPE_ACTION_ANSWER, DatabaseResultReceiver.TYPE_COORDENADAS);
         bundle.putParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER,coordenadas);
         receiver.send(DatabaseResultReceiver.RESULT_CODE_OK,bundle);
     }
