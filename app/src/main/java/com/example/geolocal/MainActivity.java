@@ -15,7 +15,6 @@ import com.example.geolocal.broadcast.IBroadcastManagerCaller;
 import com.example.geolocal.broadcast.NetworkChangeReceiver;
 import com.example.geolocal.data.model.Coordenada;
 import com.example.geolocal.data.model.User;
-import com.example.geolocal.database.AppDatabase;
 import com.example.geolocal.database.DatabaseIntentService;
 import com.example.geolocal.gps.GPSManager;
 import com.example.geolocal.gps.IGPSManagerCaller;
@@ -157,6 +156,7 @@ public class MainActivity extends AppCompatActivity
             this.mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this),map);
             this.mLocationOverlay.enableMyLocation();
             map.getOverlays().add(this.mLocationOverlay);
+
         }catch (Exception error){
             Toast.makeText(this,error.getMessage(),Toast.LENGTH_SHORT).show();
         }
