@@ -1,6 +1,8 @@
 package com.example.geolocal;
 
 import android.Manifest;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -46,9 +48,11 @@ import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import org.osmdroid.api.IMapController;
@@ -59,7 +63,10 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 public class MainActivity extends AppCompatActivity
@@ -76,6 +83,8 @@ public class MainActivity extends AppCompatActivity
     TextView networkStatusTextView;
     boolean socketServiceStarted=false;
     boolean network;
+    private Date from, to;
+    Button buttonDateFrom, buttonDateTo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +130,36 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        final Button buttonStartSearchCoordenadas = (Button)findViewById(R.id.start_search_coordenadas);
+        buttonDateFrom = (Button)findViewById(R.id.button_date_from);
+        buttonDateTo = (Button)findViewById(R.id.button_date_to);
+
+        buttonDateFrom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getDate(MainActivity.this, buttonDateFrom,true);
+                buttonStartSearchCoordenadas.setEnabled(to!=null);
+            }
+        });
+
+        buttonDateTo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getDate(MainActivity.this, buttonDateTo,false);
+                buttonStartSearchCoordenadas.setEnabled(from!=null);
+            }
+        });
+
+        final MainActivity ma = this;
+        buttonStartSearchCoordenadas.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(from!=null && to!=null){
+                    DatabaseIntentService.startActionGetCoordenadas(getApplicationContext(),ma,user.userId,from,to);
+                }
+            }
+        });
+
         initializeGPSManager();
         initializeOSM();
         initializeBroadcastManagerForSocketIO();
@@ -163,9 +202,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void initializeBroadcastManagerForSocketIO(){
-        broadcastManagerForSocketIO=new BroadcastManager(this,
-                SocketManagementService.
-                        SOCKET_SERVICE_CHANNEL,this);
+        broadcastManagerForSocketIO = new BroadcastManager(this, SocketManagementService.SOCKET_SERVICE_CHANNEL,this);
     }
 
     public void initializeBroadcastNetwork(){
@@ -248,6 +285,30 @@ public class MainActivity extends AppCompatActivity
             networkStatusTextView.setText(R.string.status_offline);
             networkStatusTextView.setTextColor(getResources().getColor(R.color.red));
         }
+    }
+
+    private void getDate(final Context context, final Button button, final boolean isFrom) {
+        final Calendar date;
+        final Calendar currentDate = Calendar.getInstance();
+        date = Calendar.getInstance();
+        new DatePickerDialog(context, new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                date.set(year, monthOfYear, dayOfMonth);
+                new TimePickerDialog(context, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        date.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                        date.set(Calendar.MINUTE, minute);
+                        //Log.v(TAG, "The choosen one " + date.getTime());
+                        DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
+                        button.setText(dateFormat.format(date.getTime()));
+                        if(isFrom) from = date.getTime();
+                        else to = date.getTime();
+                    }
+                }, currentDate.get(Calendar.HOUR_OF_DAY), currentDate.get(Calendar.MINUTE), false).show();
+            }
+        }, currentDate.get(Calendar.YEAR), currentDate.get(Calendar.MONTH), currentDate.get(Calendar.DATE)).show();
     }
 
     @Override

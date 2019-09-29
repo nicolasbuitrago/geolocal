@@ -12,7 +12,7 @@ import androidx.room.PrimaryKey;
 
 import java.util.Date;
 
-@Entity(indices = {@Index("from")},
+@Entity(indices = {@Index("user_id")},
         foreignKeys = @ForeignKey(entity = User.class,
                 parentColumns = "user_id",
                 childColumns = "user_id",

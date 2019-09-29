@@ -170,6 +170,98 @@
                 />
         </LinearLayout>
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Consulta de coordenadas"
+            android:fontFamily="@font/futurafontfamily"
+            android:textSize="16sp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="10dp"
+            android:textStyle="bold"
+            />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:background="@color/colorPrimaryDark"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="10dp"
+            />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
+
+            >
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/futurafontfamily"
+                android:textSize="16sp"
+                android:text="Date from"
+                android:layout_weight="0.5"
+                />
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/futurafontfamily"
+                android:textSize="10sp"
+                android:id="@+id/button_date_from"
+                android:text="No date yet"
+                android:layout_weight="0.5"
+                android:textAlignment="textEnd"
+                />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
+
+            >
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/futurafontfamily"
+                android:textSize="16sp"
+                android:text="Date to"
+                android:layout_weight="0.5"
+                />
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/futurafontfamily"
+                android:textSize="10sp"
+                android:id="@+id/button_date_to"
+                android:text="No date yet"
+                android:layout_weight="0.5"
+                android:textAlignment="textEnd"
+                />
+        </LinearLayout>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="Search Location"
+            android:id="@+id/start_search_coordenadas"
+            android:layout_margin="20dp"
+            android:enabled="false"
+            android:fontFamily="@font/futurafontfamily"
+            android:background="@color/colorPrimaryDark"
+            android:textColor="@android:color/white"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"/>
 
         <TextView
             android:layout_width="match_parent"
@@ -269,11 +361,7 @@
             android:background="@color/colorPrimaryDark"
             android:textColor="@android:color/white"
             android:layout_marginLeft="10dp"
-
-            android:layout_marginRight="10dp"
-
-
-            />
+            android:layout_marginRight="10dp"/>
 
         <TextView
             android:layout_width="match_parent"

@@ -16,11 +16,12 @@ import com.example.geolocal.dao.MessageDao;
 import com.example.geolocal.dao.UserDao;
 import com.example.geolocal.data.Converters;
 import com.example.geolocal.data.model.Coordenada;
+import com.example.geolocal.data.model.Message;
 import com.example.geolocal.data.model.User;
 
 import java.util.Date;
 
-@Database(entities = {User.class, Coordenada.class}, version = 1, exportSchema = false)
+@Database(entities = {User.class, Coordenada.class, Message.class}, version = 2, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
