@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         network = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
         networkStatusTextView = ((TextView)findViewById(R.id.status_network_text));
-        networkStatusTextView.setText(network?R.string.status_online:R.string.status_offline);
+        setNetworkStatus(network);
     }
 
     public void initializeGPSManager(){
