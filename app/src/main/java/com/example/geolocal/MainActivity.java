@@ -1,6 +1,7 @@
 package com.example.geolocal;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
@@ -15,7 +16,9 @@ import android.os.Bundle;
 import com.example.geolocal.broadcast.BroadcastManager;
 import com.example.geolocal.broadcast.IBroadcastManagerCaller;
 import com.example.geolocal.broadcast.NetworkChangeReceiver;
+import com.example.geolocal.data.LoginRepository;
 import com.example.geolocal.data.model.Coordenada;
+import com.example.geolocal.data.model.Message;
 import com.example.geolocal.data.model.User;
 import com.example.geolocal.database.DatabaseIntentService;
 import com.example.geolocal.gps.GPSManager;
@@ -25,6 +28,7 @@ import com.example.geolocal.network.WebServiceService;
 import com.example.geolocal.receiver.DatabaseResultReceiver;
 import com.example.geolocal.receiver.IResultReceiverCaller;
 import com.example.geolocal.receiver.WebServiceResultReceiver;
+import com.example.geolocal.ui.login.LoginActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -91,6 +95,7 @@ public class MainActivity extends AppCompatActivity
     Button buttonDateFrom, buttonDateTo;
     ItemizedOverlayWithFocus<OverlayItem> mOverlaysConsulta;
     private ArrayList<Coordenada> coordenadasToPush;
+    private ArrayList<Message> messages;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,14 +121,13 @@ public class MainActivity extends AppCompatActivity
 
         initializeStatusNetwork();
 
+        coordenadasToPush = new ArrayList<>();
+        messages = new ArrayList<>();
+
         user = (User) getIntent().getSerializableExtra("user");
 
-        /*String user=getIntent().getExtras().
-                getString("user_name");
-        Toast.makeText(
-                this,
-                "Welcome "+user,Toast.LENGTH_LONG).
-                show();*/
+        WebServiceService.startActionGet(getApplicationContext(),this,WebServiceService.URL,"messages",WebServiceService.MESSAGE);
+
         ((Button)findViewById(R.id.start_service_button)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -250,6 +254,14 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            LoginRepository.getInstance(null).logout();
+            setResult(Activity.RESULT_OK);
+
+            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+            startActivity(intent);
+
+            //Complete and destroy login activity once successful
+            finish();
             return true;
         }
 
@@ -456,9 +468,14 @@ public class MainActivity extends AppCompatActivity
             type = bundle.getString(IResultReceiverCaller.TYPE_ACTION_ANSWER);
             if(type.equals(IResultReceiverCaller.PUSH_OK)){
                 coordenadasToPush.clear();
+            }else if(type.equals(IResultReceiverCaller.TYPE_MESSAGES)){
+                ArrayList<Message> mess = bundle.getParcelableArrayList(IResultReceiverCaller.ACTION_ANSWER);
+                if(mess!=null) messages = mess;
+                else Toast.makeText(this, "Problem in GET MESSAGES WS", Toast.LENGTH_SHORT).show();
+            }else {
+                String result = bundle.getString(IResultReceiverCaller.ACTION_ANSWER);
+                Toast.makeText(this, result, Toast.LENGTH_SHORT).show();
             }
-            String result = bundle.getString(IResultReceiverCaller.ACTION_ANSWER);
-            Toast.makeText(this,result,Toast.LENGTH_SHORT).show();
         }else{
             String result = bundle.getString(IResultReceiverCaller.TYPE_ACTION_ANSWER);
             if(result.equals(IResultReceiverCaller.TYPE_USER)) {
