@@ -7,6 +7,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
 
+import com.example.geolocal.data.model.Coordenada;
+import com.example.geolocal.data.model.Message;
+import com.example.geolocal.data.model.User;
 import com.example.geolocal.receiver.IResultReceiverCaller;
 import com.example.geolocal.receiver.WebServiceResultReceiver;
 
@@ -15,6 +18,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -28,11 +32,20 @@ public class WebServiceService extends IntentService {
 
     private static final String ACTION_SEND = "com.example.geolocal.network.action.SEND";
     private static final String ACTION_GET = "com.example.geolocal.network.action.GET";
+    private static final String ACTION_PUSH = "com.example.geolocal.network.action.PUSH";
+
+    public static final String USER = "com.example.geolocal.network.action.GET.USER";
+    public static final String COORDENADA = "com.example.geolocal.network.action.GET.COORDENADA";
+    public static final String MESSAGE = "com.example.geolocal.network.action.GET.MESSAGE";
 
     private static final String EXTRA_RECEIVER = "com.example.geolocal.network.extra.RECEIVER";
     private static final String EXTRA_URL = "com.example.geolocal.network.extra.URL";
     private static final String EXTRA_METHOD = "com.example.geolocal.network.extra.METHOD";
     private static final String EXTRA_RESOURCE_NAME = "com.example.geolocal.network.extra.RESOURCE_NAME";
+    private static final String EXTRA_OPERATION = "com.example.geolocal.network.extra.OPERATION";
+    private static final String EXTRA_USER = "com.example.geolocal.network.extra.USER";
+    private static final String EXTRA_COORDENADA = "com.example.geolocal.network.extra.COORDENADA";
+    private static final String EXTRA_MESSAGE = "com.example.geolocal.network.extra.EXTRA_MESSAGE";
 
     public WebServiceService() {
         super("WebServiceService");
@@ -44,8 +57,7 @@ public class WebServiceService extends IntentService {
      *
      * @see IntentService
      */
-    // TODO: Customize helper method
-    public static void startActionSend(Context context, IResultReceiverCaller caller, String url, String resourceName) {
+    public static void startActionSend(Context context, IResultReceiverCaller caller, String url, String resourceName, User user) {
         WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
         receiver.setReceiver(caller);
         Intent intent = new Intent(context, WebServiceService.class);
@@ -54,6 +66,33 @@ public class WebServiceService extends IntentService {
         intent.putExtra(EXTRA_URL, url);
         intent.putExtra(EXTRA_RESOURCE_NAME, resourceName);
         intent.putExtra(EXTRA_METHOD, "POST");
+        intent.putExtra(EXTRA_USER, user);
+        context.startService(intent);
+    }
+
+    public static void startActionSend(Context context, IResultReceiverCaller caller, String url, String resourceName, Coordenada coordenada) {
+        WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
+        receiver.setReceiver(caller);
+        Intent intent = new Intent(context, WebServiceService.class);
+        intent.setAction(ACTION_SEND);
+        intent.putExtra(EXTRA_RECEIVER, receiver);
+        intent.putExtra(EXTRA_URL, url);
+        intent.putExtra(EXTRA_RESOURCE_NAME, resourceName);
+        intent.putExtra(EXTRA_METHOD, "POST");
+        intent.putExtra(EXTRA_COORDENADA, coordenada);
+        context.startService(intent);
+    }
+
+    public static void startActionSend(Context context, IResultReceiverCaller caller, String url, String resourceName, Message message) {
+        WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
+        receiver.setReceiver(caller);
+        Intent intent = new Intent(context, WebServiceService.class);
+        intent.setAction(ACTION_SEND);
+        intent.putExtra(EXTRA_RECEIVER, receiver);
+        intent.putExtra(EXTRA_URL, url);
+        intent.putExtra(EXTRA_RESOURCE_NAME, resourceName);
+        intent.putExtra(EXTRA_METHOD, "POST");
+        intent.putExtra(EXTRA_MESSAGE, message);
         context.startService(intent);
     }
 
@@ -64,7 +103,7 @@ public class WebServiceService extends IntentService {
      * @see IntentService
      */
     // TODO: Customize helper method
-    public static void startActionGet(Context context, IResultReceiverCaller caller, String url, String resourceName) {
+    public static void startActionGet(Context context, IResultReceiverCaller caller, String url, String resourceName, String operation) {
         WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
         receiver.setReceiver(caller);
         Intent intent = new Intent(context, WebServiceService.class);
@@ -75,6 +114,20 @@ public class WebServiceService extends IntentService {
         intent.putExtra(EXTRA_METHOD, "GET");
         context.startService(intent);
     }
+
+    public static void startActionPush(Context context, IResultReceiverCaller caller, String url, String resourceName, ArrayList<Coordenada> coordenadas) {
+        WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
+        receiver.setReceiver(caller);
+        Intent intent = new Intent(context, WebServiceService.class);
+        intent.setAction(ACTION_PUSH);
+        intent.putExtra(EXTRA_RECEIVER, receiver);
+        intent.putExtra(EXTRA_URL, url);
+        intent.putExtra(EXTRA_RESOURCE_NAME, resourceName);
+        intent.putExtra(EXTRA_METHOD, "POST");
+        intent.putExtra(IResultReceiverCaller.TYPE_COORDENADAS, coordenadas);
+        context.startService(intent);
+    }
+
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -87,12 +140,24 @@ public class WebServiceService extends IntentService {
                 final String url = intent.getStringExtra(EXTRA_URL);
                 final String resourceName = intent.getStringExtra(EXTRA_RESOURCE_NAME);
                 final String method = intent.getStringExtra(EXTRA_METHOD);
-                handleActionSend(receiver, url,resourceName,method,bundle);
+                final User user = (User) intent.getSerializableExtra(EXTRA_USER);
+                final Coordenada coordenada = (Coordenada) intent.getSerializableExtra(EXTRA_COORDENADA);
+                final Message message = (Message) intent.getSerializableExtra(EXTRA_MESSAGE);
+
+                if(user != null) handleActionSend(receiver, url,resourceName,method, user, bundle);
+                else if (coordenada!= null) handleActionSend(receiver, url,resourceName,method, coordenada, bundle);
+                else handleActionSend(receiver, url,resourceName,method, message, bundle);
             } else if (ACTION_GET.equals(action)) {
                 final String url = intent.getStringExtra(EXTRA_URL);
                 final String resourceName = intent.getStringExtra(EXTRA_RESOURCE_NAME);
                 final String method = intent.getStringExtra(EXTRA_METHOD);
                 handleActionGet(receiver,url,resourceName,method,bundle);
+            } else if(ACTION_PUSH.equals(action)){
+                final String url = intent.getStringExtra(EXTRA_URL);
+                final String resourceName = intent.getStringExtra(EXTRA_RESOURCE_NAME);
+                final String method = intent.getStringExtra(EXTRA_METHOD);
+                final ArrayList<Coordenada> coordenadas = intent.getParcelableArrayListExtra(IResultReceiverCaller.TYPE_COORDENADAS);
+                handleActionPush(receiver,url,resourceName,method,coordenadas,bundle);
             }
         }
     }
@@ -101,17 +166,43 @@ public class WebServiceService extends IntentService {
      * Handle action Foo in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionSend(ResultReceiver receiver, String url, String resourceName, String method, Bundle bundle){
+    private void handleActionSend(ResultReceiver receiver, String url, String resourceName, String method, User user, Bundle bundle){
         String result = null;
         try {
 
 
         }catch (Exception error) {
-            bundle.putSerializable(WebServiceResultReceiver.PARAM_EXCEPTION, new Exception("HTTP error"));
-            receiver.send(WebServiceResultReceiver.RESULT_CODE_ERROR,bundle);
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
         }
 
-        receiver.send(WebServiceResultReceiver.RESULT_CODE_OK,bundle);
+        receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
+    }
+
+    private void handleActionSend(ResultReceiver receiver, String url, String resourceName, String method, Coordenada coordenada, Bundle bundle){
+        String result = null;
+        try {
+
+
+        }catch (Exception error) {
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
+        }
+
+        receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
+    }
+
+    private void handleActionSend(ResultReceiver receiver, String url, String resourceName, String method, Message message, Bundle bundle){
+        String result = null;
+        try {
+
+
+        }catch (Exception error) {
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
+        }
+
+        receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
     }
 
     /**
@@ -123,15 +214,27 @@ public class WebServiceService extends IntentService {
         try {
             result = http(url,resourceName,method,"operation","");
             if(result != null){
-                bundle.putString(WebServiceResultReceiver.ACTION_ANSWER,result);
-                receiver.send(WebServiceResultReceiver.RESULT_CODE_OK,bundle);
+                bundle.putString(IResultReceiverCaller.ACTION_ANSWER,result);
             }
         }catch (Exception error) {
-            bundle.putSerializable(WebServiceResultReceiver.PARAM_EXCEPTION, new Exception("HTTP error"));
-            receiver.send(WebServiceResultReceiver.RESULT_CODE_ERROR,bundle);
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
         }
 
-        receiver.send(WebServiceResultReceiver.RESULT_CODE_OK,bundle);
+        receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
+    }
+
+    private void handleActionPush(ResultReceiver receiver, String url, String resourceName, String method, ArrayList<Coordenada> coordenadas, Bundle bundle){
+        String result = null;
+        try {
+
+            bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER,IResultReceiverCaller.PUSH_OK);
+        }catch (Exception error) {
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
+        }
+
+        receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
     }
 
     private String http(String url, String resourceName, String method, String operation, String payload)  throws IOException{

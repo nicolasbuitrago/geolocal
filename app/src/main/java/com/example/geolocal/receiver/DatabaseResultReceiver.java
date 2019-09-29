@@ -5,7 +5,8 @@ import android.os.Handler;
 import android.os.ResultReceiver;
 
 public class DatabaseResultReceiver extends ResultReceiver {
-    public static final int RESULT_CODE_OK = 200;
+
+    /*public static final int RESULT_CODE_OK = 200;
     public static final int RESULT_CODE_ERROR = 404;
     public static final String PARAM_EXCEPTION = "com.example.geolocal.receiver.EXCEPTION";
     public static final String TYPE_ACTION_ANSWER = "com.example.geolocal.receiver.TYPE_ACTION_ANSWER";
@@ -15,7 +16,7 @@ public class DatabaseResultReceiver extends ResultReceiver {
     public static final String TYPE_MESSAGE = "com.example.geolocal.receiver.TYPE_MESSAGE";
     public static final String TYPE_MESSAGES = "com.example.geolocal.receiver.TYPE_MESSAGES";
     public static final String TYPE_USER = "com.example.geolocal.receiver.TYPE_USER";
-    public static final String TYPE_BOOLEAN = "com.example.geolocal.receiver.TYPE_USER";
+    public static final String TYPE_BOOLEAN = "com.example.geolocal.receiver.TYPE_USER";*/
 
     private IResultReceiverCaller caller;
 
@@ -31,10 +32,10 @@ public class DatabaseResultReceiver extends ResultReceiver {
     protected void onReceiveResult(int resultCode, Bundle resultData) {
 
         if (caller != null) {
-            if(resultCode == RESULT_CODE_OK){
+            if(resultCode == IResultReceiverCaller.RESULT_CODE_OK){
                 caller.onReceiveResult(resultData);
             } else {
-                caller.onReceiveError((Exception) resultData.getSerializable(PARAM_EXCEPTION));
+                caller.onReceiveError((Exception) resultData.getSerializable(IResultReceiverCaller.PARAM_EXCEPTION));
 
             }
         }

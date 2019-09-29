@@ -5,8 +5,6 @@ import android.os.Bundle;
 
 import com.example.geolocal.data.model.User;
 import com.example.geolocal.database.DatabaseIntentService;
-import com.example.geolocal.network.WebServiceService;
-import com.example.geolocal.receiver.DatabaseResultReceiver;
 import com.example.geolocal.receiver.IResultReceiverCaller;
 
 import java.io.IOException;
@@ -42,15 +40,15 @@ public class LoginDataSource implements IResultReceiverCaller{
     public void onReceiveResult(Bundle data) {
         String type = data.getString(IResultReceiverCaller.EXTRA_TYPE);
         if(type.equals(IResultReceiverCaller.DATABASE)){
-            String result = data.getString(DatabaseResultReceiver.TYPE_ACTION_ANSWER);
-            if(result.equals(DatabaseResultReceiver.TYPE_USER)) {
-                User user = (User) data.getSerializable(DatabaseResultReceiver.ACTION_ANSWER);
+            String result = data.getString(IResultReceiverCaller.TYPE_ACTION_ANSWER);
+            if(result.equals(IResultReceiverCaller.TYPE_USER)) {
+                User user = (User) data.getSerializable(IResultReceiverCaller.ACTION_ANSWER);
                 LoginRepository.getInstance(this).logged((user != null) ? new Result.Success<>(user) : new Result.Error(new IOException("Error logging in")));
             }
         }else{
-            String result = data.getString(DatabaseResultReceiver.TYPE_ACTION_ANSWER);
-            if(result.equals(DatabaseResultReceiver.TYPE_USER)) {
-                User user = (User) data.getSerializable(DatabaseResultReceiver.ACTION_ANSWER);
+            String result = data.getString(IResultReceiverCaller.TYPE_ACTION_ANSWER);
+            if(result.equals(IResultReceiverCaller.TYPE_USER)) {
+                User user = (User) data.getSerializable(IResultReceiverCaller.ACTION_ANSWER);
                 LoginRepository.getInstance(this).logged((user != null) ? new Result.Success<>(user) : new Result.Error(new IOException("Error logging in")));
             }
         }

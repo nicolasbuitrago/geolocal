@@ -26,10 +26,7 @@ import android.widget.Toast;
 import com.example.geolocal.MainActivity;
 import com.example.geolocal.R;
 import com.example.geolocal.data.LoginRepository;
-import com.example.geolocal.database.AppDatabase;
 import com.example.geolocal.database.DatabaseIntentService;
-import com.example.geolocal.ui.login.LoginViewModel;
-import com.example.geolocal.ui.login.LoginViewModelFactory;
 
 public class LoginActivity extends AppCompatActivity {
 

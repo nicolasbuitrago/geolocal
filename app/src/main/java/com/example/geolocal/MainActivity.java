@@ -86,10 +86,11 @@ public class MainActivity extends AppCompatActivity
     ArrayAdapter<String> adapter ;
     TextView networkStatusTextView;
     boolean socketServiceStarted=false;
-    boolean network;
+    boolean network, needPush;
     private Date from, to;
     Button buttonDateFrom, buttonDateTo;
     ItemizedOverlayWithFocus<OverlayItem> mOverlaysConsulta;
+    private ArrayList<Coordenada> coordenadasToPush;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -268,7 +269,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_slideshow) {
             DatabaseIntentService.startActionGetUser(getApplicationContext(),this,"nicolas@email.com");
         } else if (id == R.id.nav_tools) {
-            WebServiceService.startActionGet(getApplicationContext(),this,"http://192.168.1.55:8080","nicolas");
+            WebServiceService.startActionGet(getApplicationContext(),this,"http://192.168.1.55:8080","nicolas",WebServiceService.USER);
 
         } else if (id == R.id.nav_share) {
 
@@ -357,7 +358,11 @@ public class MainActivity extends AppCompatActivity
                 }
             });
         }else if(channel.equals(NetworkChangeReceiver.CHANNEL_NETWORK)){
-            setNetworkStatus(type.equals(NetworkChangeReceiver.TYPE_NETWORK_ONLINE));
+            boolean aux = type.equals(NetworkChangeReceiver.TYPE_NETWORK_ONLINE);
+            setNetworkStatus(aux);
+            if(needPush && aux){
+                WebServiceService.startActionPush(getApplicationContext(),this,WebServiceService.URL,"coordenadas",coordenadasToPush);
+            }
         }
     }
 
@@ -399,7 +404,14 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
-
+        Coordenada coordenada = new Coordenada(user.userId,Calendar.getInstance().getTime(),location.getLatitude(),location.getLongitude());
+        DatabaseIntentService.startActionSaveCoordenada(getApplicationContext(),this,coordenada);
+        if (!network) {
+            needPush = true;
+            coordenadasToPush.add(coordenada);
+        }else {
+            WebServiceService.startActionSend(getApplicationContext(), this, WebServiceService.URL, "",coordenada);
+        }
         if(socketServiceStarted)
             if(broadcastManagerForSocketIO!=null){
                 broadcastManagerForSocketIO.sendBroadcast(
@@ -441,16 +453,20 @@ public class MainActivity extends AppCompatActivity
     public void onReceiveResult(Bundle bundle) {
         String type = bundle.getString(IResultReceiverCaller.EXTRA_TYPE);
         if(type.equals(IResultReceiverCaller.WEBSERVICE)){
-            String result = bundle.getString(WebServiceResultReceiver.ACTION_ANSWER);
+            type = bundle.getString(IResultReceiverCaller.TYPE_ACTION_ANSWER);
+            if(type.equals(IResultReceiverCaller.PUSH_OK)){
+                coordenadasToPush.clear();
+            }
+            String result = bundle.getString(IResultReceiverCaller.ACTION_ANSWER);
             Toast.makeText(this,result,Toast.LENGTH_SHORT).show();
         }else{
-            String result = bundle.getString(DatabaseResultReceiver.TYPE_ACTION_ANSWER);
-            if(result.equals(DatabaseResultReceiver.TYPE_USER)) {
-                User user = (User) bundle.getSerializable(DatabaseResultReceiver.ACTION_ANSWER);
+            String result = bundle.getString(IResultReceiverCaller.TYPE_ACTION_ANSWER);
+            if(result.equals(IResultReceiverCaller.TYPE_USER)) {
+                User user = (User) bundle.getSerializable(IResultReceiverCaller.ACTION_ANSWER);
 
                 Toast.makeText(this, R.string.welcome +" "+ user.userName, Toast.LENGTH_SHORT).show();
-            }else if(result.equals(DatabaseResultReceiver.TYPE_COORDENADAS)){
-                ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER);
+            }else if(result.equals(IResultReceiverCaller.TYPE_COORDENADAS)){
+                ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(IResultReceiverCaller.ACTION_ANSWER);
                 addOverLays(coordenadas);
                 Toast.makeText(this, "Coordenadas: " + coordenadas.size(), Toast.LENGTH_SHORT).show();
             }
