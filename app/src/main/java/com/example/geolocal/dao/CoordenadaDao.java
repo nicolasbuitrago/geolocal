@@ -26,7 +26,7 @@ public interface CoordenadaDao {
     @Query("select * from Coordenada  WHERE date = :date")
     List<Coordenada> getCoordenadabyDate(Date date);
 
-    @Query("select * from Coordenada  WHERE user_id = :userId AND date BETWEEN :from AND :to")
+    @Query("select * from Coordenada  WHERE (user_id = :userId) AND (date BETWEEN :from AND :to)")
     List<Coordenada> findCoordenadaBetweenDates(int userId, Date from, Date to);
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)

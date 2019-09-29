@@ -158,8 +158,8 @@ public class DatabaseIntentService extends IntentService {
                 handleActionGetUserForLogin(receiver, email, password, bundle);
             } else if(ACTION_GET_COORDENADAS.equals(action)){
                 final int userId = intent.getIntExtra(EXTRA_USER_ID,-1);
-                final Date from = intent.getParcelableExtra(EXTRA_DATE_FROM);
-                final Date to = intent.getParcelableExtra(EXTRA_DATE_TO);
+                final Date from = (Date) intent.getSerializableExtra(EXTRA_DATE_FROM);
+                final Date to =(Date) intent.getSerializableExtra(EXTRA_DATE_TO);
                 handleActionGetCoordenadas(receiver,userId,from,to,bundle);
             }else if(ACTION_SAVE_COORDENADA.equals(action)){
                 final Coordenada coordenada = intent.getParcelableExtra(EXTRA_COORDENADA);
@@ -220,6 +220,7 @@ public class DatabaseIntentService extends IntentService {
      */
     private void handleActionGetCoordenadas(ResultReceiver receiver, int userId, Date from, Date to, Bundle bundle) {
         List<Coordenada> coordenadas= appDatabase.CoordenadaDao().findCoordenadaBetweenDates(userId,from,to);
+        List<Coordenada> coordes= appDatabase.CoordenadaDao().getAll();
         if(coordenadas!=null) {
             ArrayList<Coordenada> cs = new ArrayList(coordenadas);
             bundle.putString(DatabaseResultReceiver.TYPE_ACTION_ANSWER, DatabaseResultReceiver.TYPE_COORDENADAS);
