@@ -12,6 +12,7 @@ import androidx.room.TypeConverters;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.geolocal.dao.CoordenadaDao;
+import com.example.geolocal.dao.MessageDao;
 import com.example.geolocal.dao.UserDao;
 import com.example.geolocal.data.Converters;
 import com.example.geolocal.data.model.Coordenada;
@@ -26,6 +27,7 @@ public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase mInstance;
     public abstract UserDao UserDao();
     public abstract CoordenadaDao CoordenadaDao();
+    public abstract MessageDao MessageDao();
 
     public synchronized static AppDatabase getDatabaseInstance(Context context) {
         if (mInstance == null) {

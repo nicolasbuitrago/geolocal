@@ -12,6 +12,8 @@ public class DatabaseResultReceiver extends ResultReceiver {
     public static final String ACTION_ANSWER = "com.example.geolocal.receiver.ACTION_ANSWER";
     public static final String TYPE_COORDENADA = "com.example.geolocal.receiver.TYPE_COORDENADA";
     public static final String TYPE_COORDENADAS = "com.example.geolocal.receiver.TYPE_COORDENADAS";
+    public static final String TYPE_MESSAGE = "com.example.geolocal.receiver.TYPE_MESSAGE";
+    public static final String TYPE_MESSAGES = "com.example.geolocal.receiver.TYPE_MESSAGES";
     public static final String TYPE_USER = "com.example.geolocal.receiver.TYPE_USER";
     public static final String TYPE_BOOLEAN = "com.example.geolocal.receiver.TYPE_USER";
 
