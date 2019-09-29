@@ -21,8 +21,6 @@ import java.util.List;
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
  * helper methods.
  */
 public class DatabaseIntentService extends IntentService {
@@ -257,7 +255,7 @@ public class DatabaseIntentService extends IntentService {
         List<Coordenada> coordenadas= appDatabase.CoordenadaDao().findCoordenadaBetweenDates(userId,from,to);
         //List<Coordenada> coordes= appDatabase.CoordenadaDao().getAll();
         if(coordenadas!=null) {
-            ArrayList<Coordenada> cs = new ArrayList(coordenadas);
+            ArrayList<Coordenada> cs = new ArrayList<>(coordenadas);
             bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_COORDENADAS);
             bundle.putParcelableArrayList(IResultReceiverCaller.ACTION_ANSWER, cs);
             receiver.send(IResultReceiverCaller.RESULT_CODE_OK, bundle);
@@ -286,7 +284,7 @@ public class DatabaseIntentService extends IntentService {
     private void handleActionGetMessages(ResultReceiver receiver, Bundle bundle) {
         List<Message> messages = appDatabase.MessageDao().getAll();
         if(messages!=null){
-            ArrayList<Message> ms = new ArrayList(messages);
+            ArrayList<Message> ms = new ArrayList<>(messages);
             bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_MESSAGES);
             bundle.putParcelableArrayList(IResultReceiverCaller.ACTION_ANSWER,ms);
             receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);

@@ -109,6 +109,7 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View view) {
                 Snackbar.make(view, "Opening chat", Snackbar.LENGTH_LONG).setAction("Action", null).show();
                 Intent intent=new Intent(getApplicationContext(),ChatActivity.class);
+                intent.putExtra("messages",messages);
                 startActivity(intent);
             }
         });

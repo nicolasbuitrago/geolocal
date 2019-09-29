@@ -2,6 +2,7 @@ package com.example.geolocal;
 
 import android.os.Bundle;
 
+import com.example.geolocal.data.model.Message;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -10,7 +11,11 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.view.View;
 
+import java.util.ArrayList;
+
 public class ChatActivity extends AppCompatActivity {
+
+    ArrayList<Message> messages;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +32,8 @@ public class ChatActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+        messages = new ArrayList<>();
     }
 
 }
