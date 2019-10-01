@@ -42,6 +42,12 @@ public class Message implements Parcelable {
     public Message() {
     }
 
+    @Ignore
+    @Override
+    public String toString() {
+        return this.userId +": "+ this.message;
+    }
+
     @Override
     public int describeContents() {
         return 0;

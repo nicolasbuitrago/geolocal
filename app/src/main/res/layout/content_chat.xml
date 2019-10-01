@@ -35,6 +35,7 @@
         app:layout_constraintTop_toBottomOf="@id/chat_tw" />
 
     <EditText
+        android:id="@+id/chat_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="10sp"

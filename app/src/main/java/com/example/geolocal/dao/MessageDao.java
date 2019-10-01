@@ -13,7 +13,7 @@ import java.util.List;
 
 @Dao
 public interface MessageDao {
-    @Query("select * from Message")
+    @Query("select * from Message ORDER BY date ASC")
     List<Message> getAll();
 
     @Query("select * from Message  WHERE user_id IN (:userIds)")
