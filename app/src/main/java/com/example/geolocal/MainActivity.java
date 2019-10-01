@@ -20,6 +20,7 @@ import com.example.geolocal.data.LoginRepository;
 import com.example.geolocal.data.model.Coordenada;
 import com.example.geolocal.data.model.Message;
 import com.example.geolocal.data.model.User;
+import com.example.geolocal.data.model.UserConnected;
 import com.example.geolocal.database.DatabaseIntentService;
 import com.example.geolocal.gps.GPSManager;
 import com.example.geolocal.gps.IGPSManagerCaller;
@@ -93,9 +94,10 @@ public class MainActivity extends AppCompatActivity
     boolean network, needPush;
     private Date from, to;
     Button buttonDateFrom, buttonDateTo;
-    ItemizedOverlayWithFocus<OverlayItem> mOverlaysConsulta;
+    ItemizedOverlayWithFocus<OverlayItem> mOverlaysConsulta, mOverlaysUsers;
     private ArrayList<Coordenada> coordenadasToPush;
     private ArrayList<Message> messages;
+    private ArrayList<UserConnected> usersConnected;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,6 +127,7 @@ public class MainActivity extends AppCompatActivity
 
         coordenadasToPush = new ArrayList<>();
         messages = new ArrayList<>();
+        usersConnected = new ArrayList<>();
 
         user = (User) getIntent().getSerializableExtra("user");
 
@@ -223,11 +226,35 @@ public class MainActivity extends AppCompatActivity
 
     public void setMapCenter(Location location){
         IMapController mapController = map.getController();
-
         mapController.setZoom(14d);
         GeoPoint startPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
         mapController.setCenter(startPoint);
+    }
 
+    private void setUsersInMap(){
+        final Context context = getApplicationContext();
+        ArrayList<OverlayItem> items = new ArrayList();
+        for (UserConnected u:usersConnected) {
+            OverlayItem item = new OverlayItem(u.getUser().userName, dateToString(u.getLocation().date), new GeoPoint(u.getLocation().latitud,u.getLocation().longitud));
+            item.setMarker(getDrawable(R.mipmap.ic_location_on));
+            items.add(item);
+        }
+        if(mOverlaysUsers != null) map.getOverlays().remove(mOverlaysUsers);
+        //the overlay
+        mOverlaysUsers = new ItemizedOverlayWithFocus<OverlayItem>(items,
+                new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
+                    @Override
+                    public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
+                        //Toast.makeText(context,item.getTitle(),Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                    @Override
+                    public boolean onItemLongPress(final int index, final OverlayItem item) {
+                        return false;
+                    }
+                }, context);
+        mOverlaysUsers.setFocusItemsOnTap(true);
+        map.getOverlays().add(mOverlaysUsers);
     }
 
     @Override
@@ -281,7 +308,17 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_gallery) {
             DatabaseIntentService.startActionGetCoordenadas(getApplicationContext(),this,user.userId,new Date(1569503534000L), new Date(1569504122000L));
         } else if (id == R.id.nav_slideshow) {
-            DatabaseIntentService.startActionGetUser(getApplicationContext(),this,"nicolas@email.com");
+//            DatabaseIntentService.startActionGetUser(getApplicationContext(),this,"nicolas@email.com");
+            User u1 = new User("Pedro","pedro@email.com","123456");
+            User u2 = new User("Maria","maria@email.com","123456");
+            Coordenada c1 = new Coordenada(1,new Date(1569503534000L),11.0085,-74.7986);
+            Coordenada c2 = new Coordenada(2,new Date(1569504230000L),11.0040,-74.7975);
+
+            UserConnected uc1 = new UserConnected(u1,c1);
+            UserConnected uc2 = new UserConnected(u2,c2);
+            usersConnected.add(uc1);
+            usersConnected.add(uc2);
+            setUsersInMap();
         } else if (id == R.id.nav_tools) {
             WebServiceService.startActionGet(getApplicationContext(),this,"http://192.168.1.55:8080","nicolas",WebServiceService.USER);
 
@@ -335,7 +372,7 @@ public class MainActivity extends AppCompatActivity
         return dateFormat.format(date);
     }
 
-    void addOverLays(ArrayList<Coordenada> coordenadas){
+    void addOverLaysConsulta(ArrayList<Coordenada> coordenadas){
         final Context context = getApplicationContext();
         ArrayList<OverlayItem> items = new ArrayList();
         for (Coordenada c : coordenadas) {
@@ -486,7 +523,7 @@ public class MainActivity extends AppCompatActivity
                 Toast.makeText(this, R.string.welcome +" "+ user.userName, Toast.LENGTH_SHORT).show();
             }else if(result.equals(IResultReceiverCaller.TYPE_COORDENADAS)){
                 ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(IResultReceiverCaller.ACTION_ANSWER);
-                addOverLays(coordenadas);
+                addOverLaysConsulta(coordenadas);
                 Toast.makeText(this, "Coordenadas: " + coordenadas.size(), Toast.LENGTH_SHORT).show();
             }
         }
