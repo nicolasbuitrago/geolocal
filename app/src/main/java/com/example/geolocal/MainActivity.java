@@ -236,7 +236,7 @@ public class MainActivity extends AppCompatActivity
         ArrayList<OverlayItem> items = new ArrayList();
         for (UserConnected u:usersConnected) {
             OverlayItem item = new OverlayItem(u.getUser().userName, dateToString(u.getLocation().date), new GeoPoint(u.getLocation().latitud,u.getLocation().longitud));
-            item.setMarker(getDrawable(R.mipmap.ic_location_on));
+            item.setMarker(u.isOnline()? getDrawable(R.mipmap.ic_location_on) : getDrawable(R.mipmap.ic_location_off));
             items.add(item);
         }
         if(mOverlaysUsers != null) map.getOverlays().remove(mOverlaysUsers);
@@ -503,11 +503,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onReceiveResult(Bundle bundle) {
         String type = bundle.getString(IResultReceiverCaller.EXTRA_TYPE);
-        if(type.equals(IResultReceiverCaller.WEBSERVICE)){
+        if(IResultReceiverCaller.WEBSERVICE.equals(type)){
             type = bundle.getString(IResultReceiverCaller.TYPE_ACTION_ANSWER);
-            if(type.equals(IResultReceiverCaller.PUSH_OK)){
+            if(IResultReceiverCaller.PUSH_OK.equals(type)){
                 coordenadasToPush.clear();
-            }else if(type.equals(IResultReceiverCaller.TYPE_MESSAGES)){
+            }else if(IResultReceiverCaller.TYPE_MESSAGES.equals(type)){
                 ArrayList<Message> mess = bundle.getParcelableArrayList(IResultReceiverCaller.ACTION_ANSWER);
                 if(mess!=null) messages = mess;
                 else Toast.makeText(this, "Problem in GET MESSAGES WS", Toast.LENGTH_SHORT).show();
