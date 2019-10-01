@@ -238,12 +238,12 @@ public class DatabaseIntentService extends IntentService {
             bundle.putSerializable(IResultReceiverCaller.ACTION_ANSWER, user);
             receiver.send(IResultReceiverCaller.RESULT_CODE_OK, bundle);
         }else{
-//            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("Invalid email"));
-//            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR, bundle);
-            bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_USER);
-            bundle.putString(IResultReceiverCaller.EXTRA_EMAIL,email);
-            bundle.putString(IResultReceiverCaller.EXTRA_PASSWORD,password);
-            receiver.send(IResultReceiverCaller.RESULT_CODE_OK, bundle);
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("Invalid email"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR, bundle);
+//            bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_USER);
+//            bundle.putString(IResultReceiverCaller.EXTRA_EMAIL,email);
+//            bundle.putString(IResultReceiverCaller.EXTRA_PASSWORD,password);
+//            receiver.send(IResultReceiverCaller.RESULT_CODE_OK, bundle);
         }
     }
 

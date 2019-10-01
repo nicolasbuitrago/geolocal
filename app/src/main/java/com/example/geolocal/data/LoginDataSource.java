@@ -1,6 +1,8 @@
 package com.example.geolocal.data;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import com.example.geolocal.data.model.User;
@@ -19,8 +21,12 @@ public class LoginDataSource implements IResultReceiverCaller{
 
     public void login(Context context, String email, String password) {
         this.context = context;
-        try {
-            DatabaseIntentService.startActionGetUserForLogin(context,this,email,password);
+        try{
+            if(isConnected(context)){
+                //WebServiceService.startActionSend(context,this,WebServiceService.URL,email);
+            }else {
+                DatabaseIntentService.startActionGetUserForLogin(context, this, email, password);
+            }
         } catch (Exception e) {
             LoginRepository.getInstance(this).logged(new Result.Error(new IOException("Error logging in")));
         }
@@ -29,9 +35,12 @@ public class LoginDataSource implements IResultReceiverCaller{
     public void register(Context context, String email, String userName, String password) {
         this.context = context;
         try {
-            DatabaseIntentService.startActionGetUserForLogin(context,this,email,password);
-            //WebServiceService.startActionSend(context,this,WebServiceService.URL,email);
-
+            if(isConnected(context)){
+                //WebServiceService.startActionSend(context,this,WebServiceService.URL,email);
+                DatabaseIntentService.startActionGetUserForLogin(context,this,email,password);
+            }else{
+                LoginRepository.getInstance(this).logged(new Result.Error(new IOException("No network")));
+            }
         } catch (Exception e) {
             LoginRepository.getInstance(this).logged(new Result.Error(new IOException("Error in Register")));
         }
@@ -39,6 +48,14 @@ public class LoginDataSource implements IResultReceiverCaller{
 
     public void logout() {
         // TODO: revoke authentication
+    }
+
+    private boolean isConnected(Context context){
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 
     @Override
@@ -51,9 +68,7 @@ public class LoginDataSource implements IResultReceiverCaller{
                 if(user != null){
                     LoginRepository.getInstance(this).logged( new Result.Success<>(user) );
                 } else{
-                    String email = data.getString(IResultReceiverCaller.EXTRA_EMAIL);
-                    String password = data.getString(IResultReceiverCaller.EXTRA_PASSWORD);
-                    WebServiceService.startActionGet(context,this,WebServiceService.URL,email+"/"+password,"login");
+                    LoginRepository.getInstance(this).logged(new Result.Error(new IOException("Error inLogin")));
                 }
             }
         }else{
