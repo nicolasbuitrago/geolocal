@@ -34,6 +34,7 @@ public class WebServiceService extends IntentService {
     private static final String ACTION_SEND = "com.example.geolocal.network.action.SEND";
     private static final String ACTION_GET = "com.example.geolocal.network.action.GET";
     private static final String ACTION_LOGIN = "com.example.geolocal.network.action.LOGIN";
+    private static final String ACTION_REGISTER = "com.example.geolocal.network.action.REGISTER";
     private static final String ACTION_PUSH = "com.example.geolocal.network.action.PUSH";
 
     public static final String USER = "com.example.geolocal.network.action.GET.USER";
@@ -132,6 +133,18 @@ public class WebServiceService extends IntentService {
         context.startService(intent);
     }
 
+    public static void startActionRegister(Context context, IResultReceiverCaller caller, String url, User user) {
+        WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
+        receiver.setReceiver(caller);
+        Intent intent = new Intent(context, WebServiceService.class);
+        intent.setAction(ACTION_GET);
+        intent.putExtra(EXTRA_RECEIVER, receiver);
+        intent.putExtra(EXTRA_URL, url);
+        intent.putExtra(EXTRA_USER, user);
+        intent.putExtra(EXTRA_METHOD, "POST");
+        context.startService(intent);
+    }
+
     public static void startActionPush(Context context, IResultReceiverCaller caller, String url, String resourceName, ArrayList<Coordenada> coordenadas) {
         WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
         receiver.setReceiver(caller);
@@ -171,6 +184,9 @@ public class WebServiceService extends IntentService {
                 final String email = intent.getStringExtra(EXTRA_EMAIL);
                 final String password = intent.getStringExtra(EXTRA_PASSWORD);
                 handleActionLogin(receiver,url,email,password,bundle);
+            } else if(ACTION_REGISTER.equals(action)){
+                final User user = (User) intent.getSerializableExtra(EXTRA_USER);
+                handleActionRegister(receiver,url,user,bundle);
             } else if(ACTION_PUSH.equals(action)){
                 final String resourceName = intent.getStringExtra(EXTRA_RESOURCE_NAME);
                 final ArrayList<Coordenada> coordenadas = intent.getParcelableArrayListExtra(IResultReceiverCaller.TYPE_COORDENADAS);
@@ -248,13 +264,33 @@ public class WebServiceService extends IntentService {
             String payload = gson.toJson(user);
             result = http(url,"users","POST","login",payload);
             user = gson.fromJson(result,User.class);
-            bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER,IResultReceiverCaller.LOGIN_OK);
-            bundle.putSerializable(IResultReceiverCaller.TYPE_USER, user);
+            bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER,IResultReceiverCaller.TYPE_USER);
+            bundle.putSerializable(IResultReceiverCaller.ACTION_ANSWER, user);
         }catch (Exception error) {
             bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
             receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
         }
         receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
+    }
+
+    private void handleActionRegister(ResultReceiver receiver,String url,User user, Bundle bundle){
+        String result = null;
+        try {
+            Gson gson = new Gson();
+            String payload = gson.toJson(user);
+            result = http(url,"users","POST","register",payload);
+            if("OK".equals(result)) {
+                bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_USER);
+                bundle.putSerializable(IResultReceiverCaller.ACTION_ANSWER, user);
+                receiver.send(IResultReceiverCaller.RESULT_CODE_OK, bundle);
+            }else{
+                bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
+                receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
+            }
+        }catch (Exception error) {
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
+        }
     }
 
     private void handleActionPush(ResultReceiver receiver, String url, String resourceName, String method, ArrayList<Coordenada> coordenadas, Bundle bundle){

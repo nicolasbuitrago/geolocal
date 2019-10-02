@@ -18,12 +18,13 @@ import java.io.IOException;
 public class LoginDataSource implements IResultReceiverCaller{
 
     private Context context;
+    private boolean isRegister = false;
 
     public void login(Context context, String email, String password) {
         this.context = context;
         try{
-            if(!isConnected(context)){ //TODO quitar la negación de este if
-                //WebServiceService.startActionSend(context,this,WebServiceService.URL,email);
+            if(isConnected(context)){
+                WebServiceService.startActionLogin(context,this,WebServiceService.URL,email,password);
             }else {
                 DatabaseIntentService.startActionGetUserForLogin(context, this, email, password);
             }
@@ -36,8 +37,8 @@ public class LoginDataSource implements IResultReceiverCaller{
         this.context = context;
         try {
             if(isConnected(context)){
-                //WebServiceService.startActionSend(context,this,WebServiceService.URL,email);
                 DatabaseIntentService.startActionGetUserForLogin(context,this,email,password);
+                isRegister = true;
             }else{
                 LoginRepository.getInstance(this).logged(new Result.Error(new IOException("No network")));
             }
@@ -46,7 +47,7 @@ public class LoginDataSource implements IResultReceiverCaller{
         }
     }
 
-    public void logout() {
+    void logout() {
         // TODO: revoke authentication
     }
 
@@ -66,7 +67,8 @@ public class LoginDataSource implements IResultReceiverCaller{
             if(result.equals(IResultReceiverCaller.TYPE_USER)) {
                 User user = (User) data.getSerializable(IResultReceiverCaller.ACTION_ANSWER);
                 if(user != null){
-                    LoginRepository.getInstance(this).logged( new Result.Success<>(user) );
+                    if(isRegister) WebServiceService.startActionRegister(context,this,WebServiceService.URL,user);
+                    else LoginRepository.getInstance(this).logged( new Result.Success<>(user) );
                 } else{
                     LoginRepository.getInstance(this).logged(new Result.Error(new IOException("Error inLogin")));
                 }
