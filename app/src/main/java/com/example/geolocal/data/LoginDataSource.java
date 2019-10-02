@@ -37,7 +37,7 @@ public class LoginDataSource implements IResultReceiverCaller{
         this.context = context;
         try {
             if(isConnected(context)){
-                DatabaseIntentService.startActionGetUserForLogin(context,this,email,password);
+                DatabaseIntentService.startActionSaveUser(context,this,new User(userName,email,password));
                 isRegister = true;
             }else{
                 LoginRepository.getInstance(this).logged(new Result.Error(new IOException("No network")));

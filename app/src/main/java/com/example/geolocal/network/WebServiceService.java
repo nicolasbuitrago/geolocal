@@ -33,7 +33,7 @@ import javax.net.ssl.HttpsURLConnection;
  */
 public class WebServiceService extends IntentService {
 
-    public static final String URL = "http://192.168.1.55:8080";
+    public static final String URL = "http://10.20.29.37:8080/restweb/webresources";
 
     private static final String ACTION_SEND = "com.example.geolocal.network.action.SEND";
     private static final String ACTION_GET = "com.example.geolocal.network.action.GET";
@@ -130,7 +130,7 @@ public class WebServiceService extends IntentService {
         WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
         receiver.setReceiver(caller);
         Intent intent = new Intent(context, WebServiceService.class);
-        intent.setAction(ACTION_GET);
+        intent.setAction(ACTION_LOGIN);
         intent.putExtra(EXTRA_RECEIVER, receiver);
         intent.putExtra(EXTRA_URL, url);
         intent.putExtra(EXTRA_EMAIL, email);
@@ -143,7 +143,7 @@ public class WebServiceService extends IntentService {
         WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
         receiver.setReceiver(caller);
         Intent intent = new Intent(context, WebServiceService.class);
-        intent.setAction(ACTION_GET);
+        intent.setAction(ACTION_REGISTER);
         intent.putExtra(EXTRA_RECEIVER, receiver);
         intent.putExtra(EXTRA_URL, url);
         intent.putExtra(EXTRA_USER, user);
@@ -162,7 +162,7 @@ public class WebServiceService extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionPull(Context context, IResultReceiverCaller caller, String url, ArrayList<Coordenada> coordenadas, int userId) {
+    public static void startActionPull(Context context, IResultReceiverCaller caller, String url, int userId) {
         WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
         receiver.setReceiver(caller);
         Intent intent = new Intent(context, WebServiceService.class);
@@ -357,10 +357,12 @@ public class WebServiceService extends IntentService {
         HttpURLConnection connection = null;
         String result = null;
         try {
-            urla=new URL(url+"/"+resourceName+"/"+operation);
+            String link = url+"/"+resourceName+"/"+operation;
+            urla=new URL(link);
             connection= (HttpURLConnection)urla.openConnection();
             connection.setDoOutput(true);
             connection.setRequestMethod(method);
+            connection.setRequestProperty("Content-Type", "application/json; utf-8");
             connection.getOutputStream().write(payload.getBytes());
             int responseCode=connection.getResponseCode();
             if(responseCode==HttpURLConnection.HTTP_OK){
@@ -372,7 +374,10 @@ public class WebServiceService extends IntentService {
                 }
                 result = stringBuffer.toString();
             }
-        }finally {
+        }catch(Exception e){
+            String error = e.getMessage();
+
+        } finally{
             // Close Stream and disconnect HTTPS connection.
 
             if (connection != null) {

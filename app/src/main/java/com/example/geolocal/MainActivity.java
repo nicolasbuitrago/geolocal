@@ -26,9 +26,7 @@ import com.example.geolocal.gps.GPSManager;
 import com.example.geolocal.gps.IGPSManagerCaller;
 import com.example.geolocal.network.SocketManagementService;
 import com.example.geolocal.network.WebServiceService;
-import com.example.geolocal.receiver.DatabaseResultReceiver;
 import com.example.geolocal.receiver.IResultReceiverCaller;
-import com.example.geolocal.receiver.WebServiceResultReceiver;
 import com.example.geolocal.ui.login.LoginActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -51,11 +49,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -66,7 +66,6 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
-import org.osmdroid.views.overlay.ItemizedOverlay;
 import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
 import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
@@ -83,12 +82,12 @@ public class MainActivity extends AppCompatActivity
 
     GPSManager gpsManager;
     private MapView map;
-    private User user;
+    private User user, userSelected;
     private MyLocationNewOverlay mLocationOverlay;
     BroadcastManager broadcastManagerForSocketIO;
     NetworkChangeReceiver broadcastNetwork;
-    ArrayList<String> listOfMessages=new ArrayList<>();
-    ArrayAdapter<String> adapter ;
+    ArrayList<String> listOfMessages, listUsers;
+    ArrayAdapter<String> adapterMessages, adapterUsers;
     TextView networkStatusTextView;
     boolean socketServiceStarted=false;
     boolean network, needPush;
@@ -128,6 +127,8 @@ public class MainActivity extends AppCompatActivity
         coordenadasToPush = new ArrayList<>();
         messages = new ArrayList<>();
         usersConnected = new ArrayList<>();
+        listOfMessages=new ArrayList<>();
+        listUsers=new ArrayList<>();
 
         user = (User) getIntent().getSerializableExtra("user");
 
@@ -166,12 +167,45 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        final Spinner spinnerUsers = (Spinner) findViewById(R.id.spinner_user);
+        // Create an ArrayAdapter using the string array and a default spinner layout
+        adapterUsers = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, listUsers);
+        // Specify the layout to use when the list of choices appears
+        adapterUsers.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner
+        spinnerUsers.setAdapter(adapterUsers);
+        setListUsers();
+        spinnerUsers.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                String un = listUsers.get(i);
+                for (UserConnected u : usersConnected) {
+                    if(u.getUser().userName.equals(un)){
+                        userSelected = u.getUser();
+                    }
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
         final MainActivity ma = this;
         buttonStartSearchCoordenadas.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(from!=null && to!=null){
-                    DatabaseIntentService.startActionGetCoordenadas(getApplicationContext(),ma,user.userId,from,to);
+                if(from!=null && to!=null && userSelected!=null){
+                    if(isConnected(getApplicationContext())){
+                        WebServiceService.startActionPull(getApplicationContext(),ma, WebServiceService.URL,userSelected.userId);
+                    }
+                    else {
+                        Toast.makeText(getApplicationContext(), "Please connect to internet.", Toast.LENGTH_SHORT).show();
+                        //DatabaseIntentService.startActionGetCoordenadas(getApplicationContext(),ma,user.userId,from,to);
+                    }
+                }else{
+                    Toast.makeText(getApplicationContext(),"Please select user and dates.",Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -180,7 +214,7 @@ public class MainActivity extends AppCompatActivity
         initializeOSM();
         initializeBroadcastManagerForSocketIO();
         initializeBroadcastNetwork();
-        adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, listOfMessages);
+        adapterMessages = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, listOfMessages);
     }
 
     private void initializeStatusNetwork(){
@@ -326,6 +360,7 @@ public class MainActivity extends AppCompatActivity
             usersConnected.add(uc1);
             usersConnected.add(uc2);
             setUsersInMap();
+            setListUsers();
         } else if (id == R.id.nav_tools) {
             WebServiceService.startActionGet(getApplicationContext(),this,"http://192.168.1.55:8080","nicolas",WebServiceService.USER);
 
@@ -349,6 +384,14 @@ public class MainActivity extends AppCompatActivity
             networkStatusTextView.setText(R.string.status_offline);
             networkStatusTextView.setTextColor(getResources().getColor(R.color.red));
         }
+    }
+
+    private void setListUsers(){
+        listUsers.clear();
+        for (UserConnected u:usersConnected) {
+            listUsers.add(u.getUser().userName);
+        }
+        adapterUsers.notifyDataSetChanged();
     }
 
     private void getDate(final Context context, final Button button, final boolean isFrom) {
@@ -411,15 +454,15 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void run() {
                     listOfMessages.add(message);
-                    ((ListView)findViewById(R.id.messages_list_view)).setAdapter(adapter);
-                    adapter.notifyDataSetChanged();
+                    ((ListView)findViewById(R.id.messages_list_view)).setAdapter(adapterMessages);
+                    adapterMessages.notifyDataSetChanged();
                 }
             });
         }else if(channel.equals(NetworkChangeReceiver.CHANNEL_NETWORK)){
             boolean aux = type.equals(NetworkChangeReceiver.TYPE_NETWORK_ONLINE);
             setNetworkStatus(aux);
             if(needPush && aux){
-                WebServiceService.startActionPush(getApplicationContext(),this,WebServiceService.URL,"coordenadas",coordenadasToPush);
+                WebServiceService.startActionPush(getApplicationContext(),this,WebServiceService.URL,coordenadasToPush);
             }
         }
     }

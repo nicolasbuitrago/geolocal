@@ -12,6 +12,7 @@ import androidx.room.PrimaryKey;
 
 import com.google.gson.Gson;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 @Entity(indices = {@Index("user_id")},
@@ -79,5 +80,15 @@ public class Coordenada implements Parcelable {
             return new Coordenada[size];
         }
     };
+
+    public static ArrayList<Coordenada> searchByDates(ArrayList<Coordenada> coordenadas, Date from, Date to){
+        ArrayList<Coordenada> cs = new ArrayList<>();
+        for (Coordenada c:coordenadas) {
+            if(c.date.before(from) && c.date.after(to)){
+                cs.add(c);
+            }
+        }
+        return cs;
+    }
 
 }
