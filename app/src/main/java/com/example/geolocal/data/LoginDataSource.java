@@ -22,7 +22,7 @@ public class LoginDataSource implements IResultReceiverCaller{
     public void login(Context context, String email, String password) {
         this.context = context;
         try{
-            if(!isConnected(context)){
+            if(!isConnected(context)){ //TODO quitar la negación de este if
                 //WebServiceService.startActionSend(context,this,WebServiceService.URL,email);
             }else {
                 DatabaseIntentService.startActionGetUserForLogin(context, this, email, password);

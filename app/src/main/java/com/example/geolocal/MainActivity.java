@@ -131,7 +131,8 @@ public class MainActivity extends AppCompatActivity
 
         user = (User) getIntent().getSerializableExtra("user");
 
-        WebServiceService.startActionGet(getApplicationContext(),this,WebServiceService.URL,"messages",WebServiceService.MESSAGE);
+        //TODO add pull messages
+        //WebServiceService.startActionGet(getApplicationContext(),this,WebServiceService.URL,"messages",WebServiceService.MESSAGE);
 
         ((Button)findViewById(R.id.start_service_button)).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -222,6 +223,12 @@ public class MainActivity extends AppCompatActivity
 
     public void initializeBroadcastNetwork(){
         broadcastNetwork=new NetworkChangeReceiver(this,this);
+    }
+
+    private boolean isConnected(Context context){
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 
     public void setMapCenter(Location location){

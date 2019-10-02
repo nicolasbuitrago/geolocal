@@ -23,6 +23,7 @@ public interface IResultReceiverCaller {
     String TYPE_LIST = "com.example.geolocal.receiver.TYPE_LIST";
     String TYPE_BOOLEAN = "com.example.geolocal.receiver.BOOLEAN";
     String PUSH_OK = "com.example.geolocal.receiver.PUSH_OK";
+    String LOGIN_OK = "com.example.geolocal.receiver.LOGIN_OK";
 
     String EXTRA_EMAIL = "com.example.geolocal.receiver.EXTRA_EMAIL";
     String EXTRA_PASSWORD = "com.example.geolocal.receiver.EXTRA_PASSWORD";
