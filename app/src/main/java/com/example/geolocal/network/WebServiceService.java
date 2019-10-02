@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -39,6 +40,7 @@ public class WebServiceService extends IntentService {
     private static final String ACTION_LOGIN = "com.example.geolocal.network.action.LOGIN";
     private static final String ACTION_REGISTER = "com.example.geolocal.network.action.REGISTER";
     private static final String ACTION_PUSH = "com.example.geolocal.network.action.PUSH";
+    private static final String ACTION_PULL = "com.example.geolocal.network.action.PULL";
 
     public static final String USER = "com.example.geolocal.network.action.GET.USER";
     public static final String COORDENADA = "com.example.geolocal.network.action.GET.COORDENADA";
@@ -50,6 +52,7 @@ public class WebServiceService extends IntentService {
     private static final String EXTRA_RESOURCE_NAME = "com.example.geolocal.network.extra.RESOURCE_NAME";
     private static final String EXTRA_OPERATION = "com.example.geolocal.network.extra.OPERATION";
     private static final String EXTRA_USER = "com.example.geolocal.network.extra.USER";
+    private static final String EXTRA_USER_ID = "com.example.geolocal.network.extra.USER_ID";
     private static final String EXTRA_EMAIL = "com.example.geolocal.network.extra.USER";
     private static final String EXTRA_PASSWORD = "com.example.geolocal.network.extra.PASSWORD";
     private static final String EXTRA_COORDENADA = "com.example.geolocal.network.extra.COORDENADA";
@@ -148,16 +151,25 @@ public class WebServiceService extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionPush(Context context, IResultReceiverCaller caller, String url, String resourceName, ArrayList<Coordenada> coordenadas) {
+    public static void startActionPush(Context context, IResultReceiverCaller caller, String url, ArrayList<Coordenada> coordenadas) {
         WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
         receiver.setReceiver(caller);
         Intent intent = new Intent(context, WebServiceService.class);
         intent.setAction(ACTION_PUSH);
         intent.putExtra(EXTRA_RECEIVER, receiver);
         intent.putExtra(EXTRA_URL, url);
-        intent.putExtra(EXTRA_RESOURCE_NAME, resourceName);
-        intent.putExtra(EXTRA_METHOD, "POST");
         intent.putExtra(IResultReceiverCaller.TYPE_COORDENADAS, coordenadas);
+        context.startService(intent);
+    }
+
+    public static void startActionPull(Context context, IResultReceiverCaller caller, String url, ArrayList<Coordenada> coordenadas, int userId) {
+        WebServiceResultReceiver receiver = new WebServiceResultReceiver(new Handler());
+        receiver.setReceiver(caller);
+        Intent intent = new Intent(context, WebServiceService.class);
+        intent.setAction(ACTION_PULL);
+        intent.putExtra(EXTRA_RECEIVER, receiver);
+        intent.putExtra(EXTRA_URL, url);
+        intent.putExtra(EXTRA_USER_ID, userId);
         context.startService(intent);
     }
 
@@ -191,9 +203,11 @@ public class WebServiceService extends IntentService {
                 final User user = (User) intent.getSerializableExtra(EXTRA_USER);
                 handleActionRegister(receiver,url,user,bundle);
             } else if(ACTION_PUSH.equals(action)){
-                final String resourceName = intent.getStringExtra(EXTRA_RESOURCE_NAME);
                 final ArrayList<Coordenada> coordenadas = intent.getParcelableArrayListExtra(IResultReceiverCaller.TYPE_COORDENADAS);
                 handleActionPush(receiver,url,coordenadas,bundle);
+            } else if(ACTION_PULL.equals(action)){
+                final int userId = intent.getIntExtra(EXTRA_USER_ID,-1);
+                handleActionPull(receiver,url,userId,bundle);
             }
         }
     }
@@ -303,13 +317,38 @@ public class WebServiceService extends IntentService {
             Coordenada[] cs = (Coordenada[]) coordenadas.toArray();
             String playload = gson.toJson(cs);
 
-            http(url,"location","POST","positions",playload);
-            bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER,IResultReceiverCaller.PUSH_OK);
+            result = http(url,"location","POST","positions",playload);
+            if("OK".equals(result)) bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER,IResultReceiverCaller.PUSH_OK);
+            else {
+                bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
+                receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
+            }
         }catch (Exception error) {
             bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
             receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
         }
+        receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
+    }
 
+    private void handleActionPull(ResultReceiver receiver, String url, int userId, Bundle bundle){
+        String result = null;
+        try {
+            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").create();
+
+            result = http(url,"locations","GET","user/"+userId,"");
+            if(result!=null) {
+                Coordenada[] cs = gson.fromJson(result, Coordenada[].class);
+                ArrayList<Coordenada> coordenadas = new ArrayList<>(Arrays.asList(cs));
+                bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_COORDENADAS);
+                bundle.putParcelableArrayList(IResultReceiverCaller.TYPE_COORDENADAS, coordenadas);
+            }else{
+                bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
+                receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
+            }
+        }catch (Exception error) {
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR,bundle);
+        }
         receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
     }
 
