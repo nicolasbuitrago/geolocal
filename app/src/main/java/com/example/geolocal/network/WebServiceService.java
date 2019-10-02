@@ -7,12 +7,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
 
+import com.example.geolocal.data.DateSerializer;
 import com.example.geolocal.data.model.Coordenada;
 import com.example.geolocal.data.model.Message;
 import com.example.geolocal.data.model.User;
 import com.example.geolocal.receiver.IResultReceiverCaller;
 import com.example.geolocal.receiver.WebServiceResultReceiver;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +22,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -190,7 +193,7 @@ public class WebServiceService extends IntentService {
             } else if(ACTION_PUSH.equals(action)){
                 final String resourceName = intent.getStringExtra(EXTRA_RESOURCE_NAME);
                 final ArrayList<Coordenada> coordenadas = intent.getParcelableArrayListExtra(IResultReceiverCaller.TYPE_COORDENADAS);
-                handleActionPush(receiver,url,resourceName,method,coordenadas,bundle);
+                handleActionPush(receiver,url,coordenadas,bundle);
             }
         }
     }
@@ -293,10 +296,14 @@ public class WebServiceService extends IntentService {
         }
     }
 
-    private void handleActionPush(ResultReceiver receiver, String url, String resourceName, String method, ArrayList<Coordenada> coordenadas, Bundle bundle){
+    private void handleActionPush(ResultReceiver receiver, String url, ArrayList<Coordenada> coordenadas, Bundle bundle){
         String result = null;
         try {
+            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").create();
+            Coordenada[] cs = (Coordenada[]) coordenadas.toArray();
+            String playload = gson.toJson(cs);
 
+            http(url,"location","POST","positions",playload);
             bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER,IResultReceiverCaller.PUSH_OK);
         }catch (Exception error) {
             bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("HTTP error"));
