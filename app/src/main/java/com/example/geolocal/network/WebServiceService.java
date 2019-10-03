@@ -362,7 +362,7 @@ public class WebServiceService extends IntentService {
             connection= (HttpURLConnection)urla.openConnection();
             connection.setDoOutput(true);
             connection.setRequestMethod(method);
-            connection.setRequestProperty("Content-Type", "application/json; utf-8");
+            connection.setRequestProperty("Content-Type", "application/json");
             connection.getOutputStream().write(payload.getBytes());
             int responseCode=connection.getResponseCode();
             if(responseCode==HttpURLConnection.HTTP_OK){

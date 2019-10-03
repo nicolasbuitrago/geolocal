@@ -73,6 +73,9 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -197,7 +200,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 if(from!=null && to!=null && userSelected!=null){
-                    if(!isConnected(getApplicationContext())){
+                    if(isConnected(getApplicationContext())){
                         WebServiceService.startActionPull(getApplicationContext(),ma, WebServiceService.URL,userSelected.userId);
                     }
                     else {
@@ -594,7 +597,10 @@ public class MainActivity extends AppCompatActivity
         for(int i = 0; i<coordenadas.size()-1; i++){
             Coordenada c1 = coordenadas.get(i);
             Coordenada c2 = coordenadas.get(i+1);
-            int t = Math.toIntExact(c2.date.getTime() - c1.date.getTime() / 1000);
+            LocalDateTime ldt1 = LocalDateTime.ofInstant(c1.date.toInstant(), ZoneId.systemDefault());
+            LocalDateTime ldt2 = LocalDateTime.ofInstant(c1.date.toInstant(), ZoneId.systemDefault());
+            Duration duration = Duration.between(ldt1, ldt2);
+            int t = Math.toIntExact(duration.getSeconds() / 1000);
             velocidad += distance(c1.latitud, c2.latitud, c1.longitud, c2.longitud)/ t;
         }
         return velocidad/coordenadas.size();
