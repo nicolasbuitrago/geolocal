@@ -215,6 +215,7 @@ public class MainActivity extends AppCompatActivity
         initializeBroadcastManagerForSocketIO();
         initializeBroadcastNetwork();
         adapterMessages = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, listOfMessages);
+        setListUsers();
     }
 
     private void initializeStatusNetwork(){
@@ -507,6 +508,8 @@ public class MainActivity extends AppCompatActivity
         });
         Coordenada coordenada = new Coordenada(user.userId,Calendar.getInstance().getTime(),location.getLatitude(),location.getLongitude());
         DatabaseIntentService.startActionSaveCoordenada(getApplicationContext(),this,coordenada);
+        usersConnected.clear();
+        usersConnected.add(new UserConnected(user,coordenada));
         if (!network) {
             needPush = true;
             coordenadasToPush.add(coordenada);
