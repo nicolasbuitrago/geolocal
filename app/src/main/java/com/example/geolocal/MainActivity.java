@@ -197,12 +197,12 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 if(from!=null && to!=null && userSelected!=null){
-                    if(isConnected(getApplicationContext())){
+                    if(!isConnected(getApplicationContext())){
                         WebServiceService.startActionPull(getApplicationContext(),ma, WebServiceService.URL,userSelected.userId);
                     }
                     else {
                         Toast.makeText(getApplicationContext(), "Please connect to internet.", Toast.LENGTH_SHORT).show();
-                        //DatabaseIntentService.startActionGetCoordenadas(getApplicationContext(),ma,user.userId,from,to);
+                        DatabaseIntentService.startActionGetCoordenadas(getApplicationContext(),ma,user.userId,from,to);
                     }
                 }else{
                     Toast.makeText(getApplicationContext(),"Please select user and dates.",Toast.LENGTH_SHORT).show();
@@ -510,6 +510,7 @@ public class MainActivity extends AppCompatActivity
         DatabaseIntentService.startActionSaveCoordenada(getApplicationContext(),this,coordenada);
         usersConnected.clear();
         usersConnected.add(new UserConnected(user,coordenada));
+        setListUsers();
         if (!network) {
             needPush = true;
             coordenadasToPush.add(coordenada);
