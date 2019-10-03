@@ -574,7 +574,8 @@ public class MainActivity extends AppCompatActivity
             }else if(result.equals(IResultReceiverCaller.TYPE_COORDENADAS)){
                 ArrayList<Coordenada> coordenadas = bundle.getParcelableArrayList(IResultReceiverCaller.ACTION_ANSWER);
                 addOverLaysConsulta(coordenadas);
-                Toast.makeText(this, "Coordenadas: " + coordenadas.size(), Toast.LENGTH_SHORT).show();
+                int v = getVelocidadPromedio(coordenadas);
+                Toast.makeText(this, "Velocidad: " + v, Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -582,5 +583,33 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onReceiveError(Exception exception) {
         Toast.makeText(this,exception.getMessage(),Toast.LENGTH_SHORT).show();
+    }
+
+    private int getVelocidadPromedio(ArrayList<Coordenada> coordenadas){
+        int velocidad = 0;
+        for(int i = 0; i<coordenadas.size()-1; i++){
+            Coordenada c1 = coordenadas.get(i);
+            Coordenada c2 = coordenadas.get(i+1);
+            int t = Math.toIntExact(c2.date.getTime() - c1.date.getTime() / 1000);
+            velocidad += distance(c1.latitud, c2.latitud, c1.longitud, c2.longitud)/ t;
+        }
+        return velocidad/coordenadas.size();
+    }
+
+    public static double distance(double lat1, double lat2, double lon1, double lon2) {
+
+        final int R = 6371; // Radius of the earth
+
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c * 1000; // convert to meters
+
+        distance = Math.pow(distance, 2);
+
+        return Math.sqrt(distance);
     }
 }
