@@ -12,20 +12,23 @@ import androidx.room.TypeConverters;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.geolocal.dao.CoordenadaDao;
+import com.example.geolocal.dao.MessageDao;
 import com.example.geolocal.dao.UserDao;
 import com.example.geolocal.data.Converters;
 import com.example.geolocal.data.model.Coordenada;
+import com.example.geolocal.data.model.Message;
 import com.example.geolocal.data.model.User;
 
 import java.util.Date;
 
-@Database(entities = {User.class, Coordenada.class}, version = 1, exportSchema = false)
+@Database(entities = {User.class, Coordenada.class, Message.class}, version = 2, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
     private static AppDatabase mInstance;
     public abstract UserDao UserDao();
     public abstract CoordenadaDao CoordenadaDao();
+    public abstract MessageDao MessageDao();
 
     public synchronized static AppDatabase getDatabaseInstance(Context context) {
         if (mInstance == null) {
@@ -49,7 +52,7 @@ public abstract class AppDatabase extends RoomDatabase {
         final UserDao userDao = mInstance.UserDao();
         final CoordenadaDao coordenadaDao = mInstance.CoordenadaDao();
         userDao.deleteAll();
-        User user1 = new User("nicolas","nicolas@email.com","12345678");
+        User user1 = new User("nicolas","n@e.c","123456");
         User user2 = new User("jair","jair@email.com","12345678");
 
         int u1 = (int)userDao.insert(user1);

@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.ResultReceiver;
 
 import com.example.geolocal.data.model.Coordenada;
+import com.example.geolocal.data.model.Message;
 import com.example.geolocal.data.model.User;
 import com.example.geolocal.receiver.DatabaseResultReceiver;
 import com.example.geolocal.receiver.IResultReceiverCaller;
@@ -20,8 +21,6 @@ import java.util.List;
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
  * helper methods.
  */
 public class DatabaseIntentService extends IntentService {
@@ -33,6 +32,9 @@ public class DatabaseIntentService extends IntentService {
     private static final String ACTION_GET_COORDENADAS = "com.example.geolocal.database.action.GET_COORDENADAS";
     private static final String ACTION_SAVE_COORDENADA = "com.example.geolocal.database.action.SAVE_COORDENADA";
     private static final String ACTION_SAVE_COORDENADAS = "com.example.geolocal.database.action.SAVE_COORDENADAS";
+    private static final String ACTION_GET_MESSAGES = "com.example.geolocal.database.action.GET_MESSAGES";
+    private static final String ACTION_GET_MESSAGE = "com.example.geolocal.database.action.GET_MESSAGE";
+    private static final String ACTION_SAVE_MESSAGES = "com.example.geolocal.database.action.SAVE_MESSAGES";
 
     private static final String EXTRA_RECEIVER = "com.example.geolocal.database.extra.RECEIVER";
     private static final String EXTRA_USER = "com.example.geolocal.database.extra.USER";
@@ -44,6 +46,9 @@ public class DatabaseIntentService extends IntentService {
     private static final String EXTRA_COORDENADAS = "com.example.geolocal.database.extra.COORDENADAS";
     private static final String EXTRA_DATE_FROM = "com.example.geolocal.database.extra.DATE_FROM";
     private static final String EXTRA_DATE_TO = "com.example.geolocal.database.extra.DATE_TO";
+    private static final String EXTRA_MESSAGE = "com.example.geolocal.database.extra.MESSAGE";
+    private static final String EXTRA_MESSAGES = "com.example.geolocal.database.extra.MESSAGES";
+    private static final String EXTRA_DATE = "com.example.geolocal.database.extra.DATE";
 
     private AppDatabase appDatabase;
 
@@ -136,35 +141,61 @@ public class DatabaseIntentService extends IntentService {
         context.startService(intent);
     }
 
+    public static void startActionGetMessages(Context context, IResultReceiverCaller caller) {
+        DatabaseResultReceiver receiver = new DatabaseResultReceiver(new Handler());
+        receiver.setReceiver(caller);
+        Intent intent = new Intent(context, DatabaseIntentService.class);
+        intent.setAction(ACTION_GET_MESSAGES);
+        intent.putExtra(EXTRA_RECEIVER, receiver);
+        context.startService(intent);
+    }
+
+    public static void startActionSaveMessages(Context context, IResultReceiverCaller caller, ArrayList<Message> messages) {
+        DatabaseResultReceiver receiver = new DatabaseResultReceiver(new Handler());
+        receiver.setReceiver(caller);
+        Intent intent = new Intent(context, DatabaseIntentService.class);
+        intent.setAction(ACTION_SAVE_MESSAGES);
+        intent.putExtra(EXTRA_RECEIVER, receiver);
+        intent.putExtra(EXTRA_MESSAGES, messages);
+        context.startService(intent);
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             appDatabase = AppDatabase.getDatabaseInstance(this);
             final ResultReceiver receiver =  intent.getParcelableExtra(EXTRA_RECEIVER);
             final String action = intent.getAction();
+            Bundle bundle = new Bundle();
+            bundle.putString(IResultReceiverCaller.EXTRA_TYPE,IResultReceiverCaller.DATABASE);
             if (ACTION_POPULATE.equals(action)) {
                 handleActionPopulate();
             } else if (ACTION_SAVE_USER.equals(action)) {
                 final User user = (User) intent.getSerializableExtra(EXTRA_USER);
-                handleActionSaveUser(receiver, user);
+                handleActionSaveUser(receiver, user, bundle);
             } else if (ACTION_GET_USER.equals(action)) {
                 final String email = intent.getStringExtra(EXTRA_USER_EMAIL);
-                handleActionGetUser(receiver, email);
+                handleActionGetUser(receiver, email, bundle);
             } else if (ACTION_GET_USER_FOR_LOGIN.equals(action)) {
                 final String email = intent.getStringExtra(EXTRA_USER_EMAIL);
                 final String password = intent.getStringExtra(EXTRA_USER_PASSWORD);
-                handleActionGetUserForLogin(receiver, email, password);
+                handleActionGetUserForLogin(receiver, email, password, bundle);
             } else if(ACTION_GET_COORDENADAS.equals(action)){
                 final int userId = intent.getIntExtra(EXTRA_USER_ID,-1);
-                final Date from = intent.getParcelableExtra(EXTRA_DATE_FROM);
-                final Date to = intent.getParcelableExtra(EXTRA_DATE_TO);
-                handleActionGetCoordenadas(receiver,userId,from,to);
+                final Date from = (Date) intent.getSerializableExtra(EXTRA_DATE_FROM);
+                final Date to =(Date) intent.getSerializableExtra(EXTRA_DATE_TO);
+                handleActionGetCoordenadas(receiver,userId,from,to,bundle);
             }else if(ACTION_SAVE_COORDENADA.equals(action)){
                 final Coordenada coordenada = intent.getParcelableExtra(EXTRA_COORDENADA);
-                handleActionSaveCoordenada(receiver, coordenada);
+                handleActionSaveCoordenada(receiver, coordenada,bundle);
             }else if(ACTION_SAVE_COORDENADAS.equals(action)){
                 final ArrayList<Coordenada> coordenadas = intent.getParcelableArrayListExtra(EXTRA_COORDENADAS);
-                handleActionSaveCoordenadas(receiver, coordenadas);
+                handleActionSaveCoordenadas(receiver, coordenadas,bundle);
+            }else if(ACTION_GET_MESSAGES.equals(action)){
+                handleActionGetMessages(receiver,bundle);
+            }else if(ACTION_SAVE_MESSAGES.equals(action)){
+                final ArrayList<Message> messages = intent.getParcelableArrayListExtra(EXTRA_MESSAGES);
+                handleActionSaveMessages(receiver, messages,bundle);
             }
         }
     }
@@ -177,41 +208,42 @@ public class DatabaseIntentService extends IntentService {
      * Handle action Save user in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionSaveUser(ResultReceiver receiver, User user) {
-        Bundle bundle = new Bundle();
+    private void handleActionSaveUser(ResultReceiver receiver, User user, Bundle bundle) {
         appDatabase.UserDao().insertAll(user);
-        bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
-        bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER,user);
-        receiver.send(DatabaseResultReceiver.RESULT_CODE_OK,bundle);
+        bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_USER);
+        bundle.putSerializable(IResultReceiverCaller.ACTION_ANSWER,user);
+        receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
     }
 
     /**
      * Handle action get user in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionGetUser(ResultReceiver receiver, String email) {
-        Bundle bundle = new Bundle();
+    private void handleActionGetUser(ResultReceiver receiver, String email, Bundle bundle) {
         User user = appDatabase.UserDao().getUserbyEmail(email);
         if(user!=null) {
-            bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
-            bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER, user);
-            receiver.send(DatabaseResultReceiver.RESULT_CODE_OK, bundle);
+            bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_USER);
+            bundle.putSerializable(IResultReceiverCaller.ACTION_ANSWER, user);
+            receiver.send(IResultReceiverCaller.RESULT_CODE_OK, bundle);
         }else{
-            bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("Username invalido"));
-            receiver.send(DatabaseResultReceiver.RESULT_CODE_ERROR, bundle);
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("Invalid email"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR, bundle);
         }
     }
 
-    private void handleActionGetUserForLogin(ResultReceiver receiver, String email, String password) {
-        Bundle bundle = new Bundle();
+    private void handleActionGetUserForLogin(ResultReceiver receiver, String email, String password, Bundle bundle) {
         User user = appDatabase.UserDao().getUserForLogin(email,password);
         if(user!=null) {
-            bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_USER);
-            bundle.putSerializable(DatabaseResultReceiver.ACTION_ANSWER, user);
-            receiver.send(DatabaseResultReceiver.RESULT_CODE_OK, bundle);
+            bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_USER);
+            bundle.putSerializable(IResultReceiverCaller.ACTION_ANSWER, user);
+            receiver.send(IResultReceiverCaller.RESULT_CODE_OK, bundle);
         }else{
-            bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("Username invalido"));
-            receiver.send(DatabaseResultReceiver.RESULT_CODE_ERROR, bundle);
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("Invalid email"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR, bundle);
+//            bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_USER);
+//            bundle.putString(IResultReceiverCaller.EXTRA_EMAIL,email);
+//            bundle.putString(IResultReceiverCaller.EXTRA_PASSWORD,password);
+//            receiver.send(IResultReceiverCaller.RESULT_CODE_OK, bundle);
         }
     }
 
@@ -219,35 +251,55 @@ public class DatabaseIntentService extends IntentService {
      * Handle action get coordenadas in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionGetCoordenadas(ResultReceiver receiver, int userId, Date from, Date to) {
-        Bundle bundle = new Bundle();
+    private void handleActionGetCoordenadas(ResultReceiver receiver, int userId, Date from, Date to, Bundle bundle) {
         List<Coordenada> coordenadas= appDatabase.CoordenadaDao().findCoordenadaBetweenDates(userId,from,to);
+        //List<Coordenada> coordes= appDatabase.CoordenadaDao().getAll();
         if(coordenadas!=null) {
-            ArrayList<Coordenada> cs = new ArrayList(coordenadas);
-            bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_COORDENADAS);
-            bundle.putParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER, cs);
-            receiver.send(DatabaseResultReceiver.RESULT_CODE_OK, bundle);
+            ArrayList<Coordenada> cs = new ArrayList<>(coordenadas);
+            bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_COORDENADAS);
+            bundle.putParcelableArrayList(IResultReceiverCaller.ACTION_ANSWER, cs);
+            receiver.send(IResultReceiverCaller.RESULT_CODE_OK, bundle);
         }else{
-            bundle.putSerializable(DatabaseResultReceiver.PARAM_EXCEPTION, new Exception("No hay coordenadas"));
-            receiver.send(DatabaseResultReceiver.RESULT_CODE_ERROR, bundle);
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("No hay coordenadas"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR, bundle);
         }
     }
 
-    private void handleActionSaveCoordenada(ResultReceiver receiver, Coordenada coordenada) {
-        Bundle bundle = new Bundle();
+    private void handleActionSaveCoordenada(ResultReceiver receiver, Coordenada coordenada, Bundle bundle) {
         appDatabase.CoordenadaDao().insertAll(coordenada);
-        bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_COORDENADA);
-        bundle.putParcelable(DatabaseResultReceiver.ACTION_ANSWER,coordenada);
-        receiver.send(DatabaseResultReceiver.RESULT_CODE_OK,bundle);
+        bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_COORDENADA);
+        bundle.putParcelable(IResultReceiverCaller.ACTION_ANSWER,coordenada);
+        receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
     }
 
-    private void handleActionSaveCoordenadas(ResultReceiver receiver, ArrayList<Coordenada> coordenadas) {
-        Bundle bundle = new Bundle();
+    private void handleActionSaveCoordenadas(ResultReceiver receiver, ArrayList<Coordenada> coordenadas, Bundle bundle) {
         Object[] array = coordenadas.toArray();
         Coordenada[] cs = Arrays.copyOf(array, array.length, Coordenada[].class);
         appDatabase.CoordenadaDao().insertAll(cs);
-        bundle.putString(DatabaseResultReceiver.PARAM_RESULT, DatabaseResultReceiver.TYPE_COORDENADAS);
-        bundle.putParcelableArrayList(DatabaseResultReceiver.ACTION_ANSWER,coordenadas);
-        receiver.send(DatabaseResultReceiver.RESULT_CODE_OK,bundle);
+        bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_COORDENADAS);
+        bundle.putParcelableArrayList(IResultReceiverCaller.ACTION_ANSWER,coordenadas);
+        receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
+    }
+
+    private void handleActionGetMessages(ResultReceiver receiver, Bundle bundle) {
+        List<Message> messages = appDatabase.MessageDao().getAll();
+        if(messages!=null){
+            ArrayList<Message> ms = new ArrayList<>(messages);
+            bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_MESSAGES);
+            bundle.putParcelableArrayList(IResultReceiverCaller.ACTION_ANSWER,ms);
+            receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
+        }else{
+            bundle.putSerializable(IResultReceiverCaller.PARAM_EXCEPTION, new Exception("No hay messages"));
+            receiver.send(IResultReceiverCaller.RESULT_CODE_ERROR, bundle);
+        }
+    }
+
+    private void handleActionSaveMessages(ResultReceiver receiver, ArrayList<Message> messages, Bundle bundle) {
+        Object[] array = messages.toArray();
+        Message[] ms = Arrays.copyOf(array, array.length, Message[].class);
+        appDatabase.MessageDao().insertAll(ms);
+        bundle.putString(IResultReceiverCaller.TYPE_ACTION_ANSWER, IResultReceiverCaller.TYPE_MESSAGES);
+        bundle.putParcelableArrayList(IResultReceiverCaller.ACTION_ANSWER,messages);
+        receiver.send(IResultReceiverCaller.RESULT_CODE_OK,bundle);
     }
 }
